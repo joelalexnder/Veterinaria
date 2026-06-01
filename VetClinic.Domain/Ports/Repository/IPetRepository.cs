@@ -1,6 +1,6 @@
 ﻿using VetClinic.Domain.Entities;
 
-namespace VetClinic.Domain.Ports;
+namespace VetClinic.Domain.Ports.Repository;
 
 public interface IPetRepository
 {

@@ -1,4 +1,4 @@
-﻿namespace VetClinic.Domain.Ports;
+﻿namespace VetClinic.Domain.Ports.Repository;
 
 public interface IUnitOfWork
 {
