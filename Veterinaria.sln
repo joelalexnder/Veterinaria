@@ -2,6 +2,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Veterinaria", "Veterinaria\Veterinaria.csproj", "{940E486F-6890-4AF8-A35E-9EFD343BFF22}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetClinic.Domain", "VetClinic.Domain\VetClinic.Domain.csproj", "{9A026233-D16B-4120-8585-3799251DDDB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetClinic.Application", "VetClinic.Application\VetClinic.Application.csproj", "{E8F4D75B-0203-467B-A1CB-85B9E2836A9C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VetClinic.Infrastructure", "VetClinic.Infrastructure\VetClinic.Infrastructure.csproj", "{05B15634-0F55-4312-B74C-872FDE89FEFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +18,17 @@ Global
 		{940E486F-6890-4AF8-A35E-9EFD343BFF22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{940E486F-6890-4AF8-A35E-9EFD343BFF22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{940E486F-6890-4AF8-A35E-9EFD343BFF22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A026233-D16B-4120-8585-3799251DDDB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A026233-D16B-4120-8585-3799251DDDB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A026233-D16B-4120-8585-3799251DDDB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A026233-D16B-4120-8585-3799251DDDB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8F4D75B-0203-467B-A1CB-85B9E2836A9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8F4D75B-0203-467B-A1CB-85B9E2836A9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8F4D75B-0203-467B-A1CB-85B9E2836A9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8F4D75B-0203-467B-A1CB-85B9E2836A9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B15634-0F55-4312-B74C-872FDE89FEFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B15634-0F55-4312-B74C-872FDE89FEFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B15634-0F55-4312-B74C-872FDE89FEFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B15634-0F55-4312-B74C-872FDE89FEFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

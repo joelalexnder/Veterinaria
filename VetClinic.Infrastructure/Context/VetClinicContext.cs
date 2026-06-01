@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using VetClinic.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Veterinaria.Models;
+namespace VetClinic.Infrastructure.Context;
 
 public partial class VetClinicContext : DbContext
 {

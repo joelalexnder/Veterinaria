@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Veterinaria.Models;
+﻿
+namespace VetClinic.Domain.Entities;
 
 public partial class GroomingPackage
 {
