@@ -1,5 +1,4 @@
 namespace VetClinic.Domain.DTOs.Auth;
-
 public class AuditLogDto
 {
     public int Id { get; set; }

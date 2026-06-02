@@ -1,4 +1,5 @@
-using VetClinic.Infrastructure.Configuration;
+using VetClinic.Infrastructure.Configuracion;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

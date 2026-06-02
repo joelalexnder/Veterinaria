@@ -1,11 +1,13 @@
-﻿using VetClinic.Domain.Ports.Repository;
-using VetClinic.Infrastructure.Context;
+﻿using Application.UseCases.Auth.Commands;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using VetClinic.Application.Mappings;
+using VetClinic.Domain.Ports.Repository;
+using VetClinic.Infrastructure.Context;
 using VetClinic.Infrastructure.Repository;
 
-namespace VetClinic.Infrastructure.Configuration;
+namespace VetClinic.Infrastructure.Configuracion;
 
 public static class InfrastructureServicesExtensions
 {
@@ -13,12 +15,16 @@ public static class InfrastructureServicesExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Base de datos PostgreSQL con Neon/Supabase
         services.AddDbContext<VetClinicContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-        // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(
+                typeof(LoginCommand).Assembly));
+
+        services.AddAutoMapper(typeof(MappingProfile));
 
         return services;
     }

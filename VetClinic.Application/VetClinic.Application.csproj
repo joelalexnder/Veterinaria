@@ -18,8 +18,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="UseCases\Auth\Commands\" />
-      <Folder Include="UseCases\Auth\Queries\" />
       <Folder Include="UseCases\MedicalRecord\Queries\" />
       <Folder Include="UseCases\Owner\Queries\" />
     </ItemGroup>
