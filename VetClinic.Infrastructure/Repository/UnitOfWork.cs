@@ -2,7 +2,6 @@
 using VetClinic.Domain;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Infrastructure.Context;
-using VetClinic.Infrastructure.Repository.Implements;
 using VetClinic.Infrastructure.Repository;
 
 
