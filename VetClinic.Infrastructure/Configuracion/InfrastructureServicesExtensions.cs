@@ -1,0 +1,31 @@
+﻿using Application.UseCases.Auth.Commands;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using VetClinic.Application.Mappings;
+using VetClinic.Domain.Ports.Repository;
+using VetClinic.Infrastructure.Context;
+using VetClinic.Infrastructure.Repository;
+
+namespace VetClinic.Infrastructure.Configuracion;
+
+public static class InfrastructureServicesExtensions
+{
+    public static IServiceCollection AddInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddDbContext<VetClinicContext>(options =>
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(
+                typeof(LoginCommand).Assembly));
+
+        services.AddAutoMapper(typeof(MappingProfile));
+
+        return services;
+    }
+}
