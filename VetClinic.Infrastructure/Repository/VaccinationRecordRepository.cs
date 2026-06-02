@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using VetClinic.Domain.Entities;
+using VetClinic.Domain.Ports.Repository;
 using VetClinic.Infrastructure.Context;
 
 namespace VetClinic.Infrastructure.Repository;
