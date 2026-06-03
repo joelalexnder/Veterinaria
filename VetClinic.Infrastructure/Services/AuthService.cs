@@ -1,9 +1,11 @@
 
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using VetClinic.Domain.Entities;
 using VetClinic.Domain.Ports;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using VetClinic.Domain.Ports.Services;
 
 
