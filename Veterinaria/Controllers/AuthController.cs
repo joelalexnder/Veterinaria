@@ -22,6 +22,15 @@ public class AuthController : ControllerBase
         return Ok(result);
     }
 
+    // obtener el hash
+    [HttpGet("generate-hash")]
+    [AllowAnonymous]
+    public IActionResult GenerateHash([FromQuery] string password)
+    {
+        var hash = BCrypt.Net.BCrypt.HashPassword(password);
+        return Ok(hash);
+    }
+
     [HttpPost("register")]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Register([FromBody] RegisterUserCommand request)
