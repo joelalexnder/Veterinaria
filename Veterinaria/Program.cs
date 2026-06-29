@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using VetClinic.Infrastructure.Configuracion;
+using Veterinaria.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ParameterValidationMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); // <- importante, antes de Authorization
