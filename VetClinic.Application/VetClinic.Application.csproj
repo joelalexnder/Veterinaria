@@ -8,7 +8,7 @@
       <ProjectReference Include="..\VetClinic.Domain\VetClinic.Domain.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="AutoMapper" Version="13.0.1" />
+      <PackageReference Include="AutoMapper" Version="16.1.1" />
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="MediatR" Version="12.4.1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
