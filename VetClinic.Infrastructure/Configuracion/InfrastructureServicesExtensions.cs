@@ -23,6 +23,8 @@ public static class InfrastructureServicesExtensions
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
+        
+        services.AddScoped<IExcelReportService, ExcelReportService>();
 
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
