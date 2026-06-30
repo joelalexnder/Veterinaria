@@ -1,7 +1,6 @@
 using MediatR;
 using AutoMapper;
 using VetClinic.Domain.DTOs.Auth;
-using VetClinic.Domain.Ports;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Domain.Ports.Services;
 
@@ -29,12 +28,16 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
     public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await _uow.Users.GetByEmailAsync(request.Email);
+        if (user is null) throw new Exception("Credenciales inválidas");
 
-        if (user is null || !_authService.Verify(request.Password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Credenciales incorrectas");
+        if (user.IsActive == false) throw new Exception("Usuario inactivo");
+
+        if (!_authService.Verify(request.Password, user.PasswordHash))
+            throw new Exception("Credenciales inválidas");
 
         var response = _mapper.Map<AuthResponseDto>(user);
         response.Token = _authService.GenerateToken(user);
+        response.RefreshToken = Guid.NewGuid().ToString();
         response.ExpiresAt = DateTime.UtcNow.AddHours(8);
 
         return response;

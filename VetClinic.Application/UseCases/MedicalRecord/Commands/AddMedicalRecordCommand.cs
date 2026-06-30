@@ -4,7 +4,6 @@ using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.MedicalRecord.Commands;
 
-
 public class AddMedicalRecordCommand : IRequest<Unit>
 {
     public int PetId { get; set; }
@@ -29,11 +28,21 @@ public class AddMedicalRecordCommandHandler : IRequestHandler<AddMedicalRecordCo
 
     public async Task<Unit> Handle(AddMedicalRecordCommand request, CancellationToken cancellationToken)
     {
+        var pet = await _uow.Pets.GetByIdAsync(request.PetId);
+        if (pet is null) throw new Exception("Mascota no encontrada");
+
         var record = _mapper.Map<Domain.Entities.MedicalRecord>(request);
         record.ConsultDate = DateTime.Now;
 
         await _uow.MedicalRecords.AddAsync(record);
         await _uow.SaveChangesAsync();
+
+        if (request.RegisteredWeight.HasValue)
+        {
+            pet.Weight = request.RegisteredWeight.Value;
+            _uow.Pets.Update(pet);
+            await _uow.SaveChangesAsync();
+        }
 
         return Unit.Value;
     }

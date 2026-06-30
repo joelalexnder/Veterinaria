@@ -30,6 +30,9 @@ public class RegisterPetCommandHandler : IRequestHandler<RegisterPetCommand, Uni
 
     public async Task<Unit> Handle(RegisterPetCommand request, CancellationToken cancellationToken)
     {
+        var owner = await _uow.Owners.GetByIdAsync(request.OwnerId);
+        if (owner is null) throw new Exception("Propietario no encontrado");
+
         var pet = _mapper.Map<Domain.Entities.Pet>(request);
         pet.CreatedAt = DateTime.Now;
 

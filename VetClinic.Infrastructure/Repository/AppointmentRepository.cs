@@ -14,12 +14,16 @@ public class AppointmentRepository : Repository<Appointment>, IAppointmentReposi
             .Where(a => a.AppointmentDate == date)
             .Include(a => a.Pet)
             .Include(a => a.Specialist)
+            .ThenInclude(s => s.User)
             .Include(a => a.ServiceArea)
             .ToListAsync();
 
     public async Task<IEnumerable<Appointment>> GetByPetIdAsync(int petId) =>
         await _context.Appointments
             .Where(a => a.PetId == petId)
+            .Include(a => a.Specialist)
+            .ThenInclude(s => s.User)
+            .Include(a => a.ServiceArea)
             .OrderByDescending(a => a.AppointmentDate)
             .ToListAsync();
 

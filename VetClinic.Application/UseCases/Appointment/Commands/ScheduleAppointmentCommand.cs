@@ -27,15 +27,15 @@ public class ScheduleAppointmentCommandHandler : IRequestHandler<ScheduleAppoint
 
     public async Task<Unit> Handle(ScheduleAppointmentCommand request, CancellationToken cancellationToken)
     {
+        var pet = await _uow.Pets.GetByIdAsync(request.PetId);
+        if (pet is null) throw new Exception("Mascota no encontrada");
+
         var hasConflict = await _uow.Appointments.HasConflictAsync(
-            request.SpecialistId,
-            request.ServiceAreaId,
-            request.AppointmentDate,
-            request.StartTime,
-            request.EndTime);
+            request.SpecialistId, request.ServiceAreaId,
+            request.AppointmentDate, request.StartTime, request.EndTime);
 
         if (hasConflict)
-            throw new Exception("Ya existe una cita en ese horario para el especialista o consultorio");
+            throw new Exception("El especialista ya tiene una cita en ese horario");
 
         var appointment = _mapper.Map<Domain.Entities.Appointment>(request);
         appointment.Status = "Pendiente";
