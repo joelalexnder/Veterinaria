@@ -39,7 +39,7 @@ public class ScheduleAppointmentCommandHandler : IRequestHandler<ScheduleAppoint
 
         var appointment = _mapper.Map<Domain.Entities.Appointment>(request);
         appointment.Status = "Pendiente";
-        appointment.CreatedAt = DateTime.UtcNow;
+        appointment.CreatedAt = DateTime.Now;
 
         await _uow.Appointments.AddAsync(appointment);
         await _uow.SaveChangesAsync();

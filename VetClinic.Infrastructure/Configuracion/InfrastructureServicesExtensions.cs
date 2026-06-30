@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VetClinic.Application.Mappings;
 using VetClinic.Application.UseCases.Auth.Commands;
-using VetClinic.Domain.Ports;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Domain.Ports.Services;
 using VetClinic.Infrastructure.Context;
@@ -20,7 +19,8 @@ public static class InfrastructureServicesExtensions
     {
         services.AddDbContext<VetClinicContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-
+       
+        services.AddHttpClient<IAiRecommendationService, GeminiAiService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
         

@@ -31,7 +31,7 @@ public class RegisterPetCommandHandler : IRequestHandler<RegisterPetCommand, Uni
     public async Task<Unit> Handle(RegisterPetCommand request, CancellationToken cancellationToken)
     {
         var pet = _mapper.Map<Domain.Entities.Pet>(request);
-        pet.CreatedAt = DateTime.UtcNow;
+        pet.CreatedAt = DateTime.Now;
 
         await _uow.Pets.AddAsync(pet);
         await _uow.SaveChangesAsync();

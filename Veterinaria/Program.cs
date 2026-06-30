@@ -1,14 +1,15 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models; // ✔ CORRECTO
+using Microsoft.OpenApi.Models;
 using VetClinic.Infrastructure.Configuracion;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Infrastructure (DB, UoW, MediatR, AutoMapper, AuthService)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -27,6 +28,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Swagger con Bearer
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -70,7 +72,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
+app.UseAuthentication(); // <- importante, antes de Authorization
 app.UseAuthorization();
 app.MapControllers();
 

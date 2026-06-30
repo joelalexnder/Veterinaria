@@ -23,7 +23,7 @@ public class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, U
 
     public async Task<UserDto> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
     {
-        var user = await _uow.Users.GetByIdAsync(request.UserId);
+        var user = await _uow.Users.GetUserWithRoleByIdAsync(request.UserId);
         if (user is null) throw new Exception("Usuario no encontrado");
         return _mapper.Map<UserDto>(user);
     }
