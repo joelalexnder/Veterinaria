@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VetClinic.Application.Mappings;
@@ -26,7 +26,7 @@ public static class InfrastructureServicesExtensions
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(LoginCommand).Assembly));
-        services.AddAutoMapper(typeof(MappingProfile));
+        services.AddAutoMapper(cfg => { }, typeof(MappingProfile));
         return services;
     }
 }
