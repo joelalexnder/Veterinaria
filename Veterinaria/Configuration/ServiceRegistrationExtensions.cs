@@ -15,7 +15,7 @@ public static class ServiceRegistrationExtensions
     public static IServiceCollection AddApplicationServices(
         this IServiceCollection services,
         IConfiguration configuration)
-    {
+    {   
         services.AddHttpContextAccessor();
 
         services.AddInfrastructureServices(configuration);
