@@ -27,7 +27,7 @@ public class RegisterOwnerCommandHandler : IRequestHandler<RegisterOwnerCommand,
     public async Task<Unit> Handle(RegisterOwnerCommand request, CancellationToken cancellationToken)
     {
         var owner = _mapper.Map<Domain.Entities.Owner>(request);
-        owner.CreatedAt = DateTime.UtcNow;
+        owner.CreatedAt = DateTime.Now;
 
         await _uow.Owners.AddAsync(owner);
         await _uow.SaveChangesAsync();

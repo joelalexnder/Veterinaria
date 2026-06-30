@@ -32,7 +32,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, U
     {
         var user = _mapper.Map<User>(request);
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-        user.CreatedAt = DateTime.UtcNow;
+        user.CreatedAt = DateTime.Now;
         user.IsActive = true;
 
         await _uow.Users.AddAsync(user);

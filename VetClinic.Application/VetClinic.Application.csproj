@@ -1,25 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
     <ItemGroup>
       <ProjectReference Include="..\VetClinic.Domain\VetClinic.Domain.csproj" />
     </ItemGroup>
-
     <ItemGroup>
       <PackageReference Include="AutoMapper" Version="13.0.1" />
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="MediatR" Version="12.4.1" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     </ItemGroup>
-
     <ItemGroup>
       <Folder Include="UseCases\MedicalRecord\Queries\" />
       <Folder Include="UseCases\Owner\Queries\" />
     </ItemGroup>
-
 </Project>

@@ -42,4 +42,14 @@ public class PetController : ControllerBase
     [Authorize(Roles = "Administrador,Veterinario")]
     public async Task<IActionResult> GetMedicalHistory([FromRoute] int petId)
         => Ok(await _mediator.Send(new GetPetMedicalHistoryQuery { PetId = petId }));
+    
+    [HttpGet("{petId}/health-summary-ai")]
+    [Authorize(Roles = "Administrador,Veterinario")]
+    public async Task<IActionResult> GetHealthSummaryAi([FromRoute] int petId)
+    {
+        var query = new GetPetHealthSummaryAiQuery { PetId = petId };
+        var result = await _mediator.Send(query);
+    
+        return Ok(new { summary = result });
+    }
 }

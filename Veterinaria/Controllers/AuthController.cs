@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
         return Ok("Usuario registrado");
     }
 
-    [HttpPut("assign-role")]
+    [HttpPut("update-role")]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> AssignRole([FromBody] AssignRoleCommand request)
     {
@@ -52,7 +52,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand request)
     {
         await _mediator.Send(request);
-        return NoContent();
+        return Ok(new
+        {
+            message = "Contraseña actualizada correctamente."
+        });
     }
 
     [HttpGet("users")]
