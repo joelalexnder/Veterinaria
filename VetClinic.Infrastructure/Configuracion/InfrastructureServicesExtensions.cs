@@ -23,7 +23,7 @@ public static class InfrastructureServicesExtensions
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAuthService, AuthService>();
-
+        
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(LoginCommand).Assembly));

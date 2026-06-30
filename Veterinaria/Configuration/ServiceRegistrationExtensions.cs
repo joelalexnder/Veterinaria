@@ -1,12 +1,10 @@
-using Microsoft.OpenApi;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using VetClinic.Infrastructure.Configuracion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-
+using Microsoft.OpenApi.Models; // ✔ CORRECTO
+using VetClinic.Infrastructure.Configuracion;
 
 namespace Veterinaria.Configuration;
 
@@ -37,6 +35,7 @@ public static class ServiceRegistrationExtensions
 
         services.AddControllers();
         services.AddEndpointsApiExplorer();
+
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo
