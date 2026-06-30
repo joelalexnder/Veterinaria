@@ -30,7 +30,7 @@ public class AddMedicalRecordCommandHandler : IRequestHandler<AddMedicalRecordCo
     public async Task<Unit> Handle(AddMedicalRecordCommand request, CancellationToken cancellationToken)
     {
         var record = _mapper.Map<Domain.Entities.MedicalRecord>(request);
-        record.ConsultDate = DateTime.UtcNow;
+        record.ConsultDate = DateTime.Now;
 
         await _uow.MedicalRecords.AddAsync(record);
         await _uow.SaveChangesAsync();

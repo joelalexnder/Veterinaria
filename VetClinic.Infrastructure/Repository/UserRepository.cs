@@ -18,4 +18,8 @@ public class UserRepository : Repository<User>, IUserRepository
         await _context.Users
             .Where(u => u.RoleId == roleId)
             .ToListAsync();
+    public async Task<User?> GetUserWithRoleByIdAsync(int id) =>
+        await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
 }
