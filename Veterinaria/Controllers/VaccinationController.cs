@@ -58,4 +58,9 @@ public class VaccinationController : ControllerBase
     [Authorize(Roles = "Administrador,Veterinario")]
     public async Task<IActionResult> GetHistory([FromRoute] int petId)
         => Ok(await _mediator.Send(new GetVaccinationHistoryQuery { PetId = petId }));
+    
+    [HttpGet("catalog")]
+    [Authorize(Roles = "Administrador,Veterinario")]
+    public async Task<IActionResult> GetCatalog()
+        => Ok(await _mediator.Send(new GetVaccineCatalogQuery()));
 }
