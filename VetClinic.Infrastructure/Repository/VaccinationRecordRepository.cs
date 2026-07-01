@@ -13,6 +13,7 @@ public class VaccinationRecordRepository : Repository<VaccinationRecord>, IVacci
         await _context.VaccinationRecords
             .Where(v => v.PetId == petId)
             .Include(v => v.Vaccine)
+            .Include(v => v.Veterinarian)
             .ToListAsync();
 
     public async Task<IEnumerable<VaccinationRecord>> GetUpcomingAsync(int days)
@@ -22,6 +23,7 @@ public class VaccinationRecordRepository : Repository<VaccinationRecord>, IVacci
             .Where(v => v.NextBoosterDate <= limit && v.NextBoosterDate >= DateOnly.FromDateTime(DateTime.Today))
             .Include(v => v.Pet)
             .Include(v => v.Vaccine)
+            .Include(v => v.Veterinarian)
             .ToListAsync();
     }
 
@@ -30,5 +32,22 @@ public class VaccinationRecordRepository : Repository<VaccinationRecord>, IVacci
             .Where(v => v.NextBoosterDate < DateOnly.FromDateTime(DateTime.Today))
             .Include(v => v.Pet)
             .Include(v => v.Vaccine)
+            .Include(v => v.Veterinarian)
+            .ToListAsync();
+    
+    public async Task<IEnumerable<VaccinationRecord>> GetAllWithDetailsAsync() =>
+        await _context.VaccinationRecords
+            .Include(v => v.Pet)
+            .Include(v => v.Vaccine)
+            .Include(v => v.Veterinarian)
+            .ToListAsync();
+
+    // NUEVO: registros de vacunación aplicados por un veterinario específico
+    public async Task<IEnumerable<VaccinationRecord>> GetByVeterinarianIdAsync(int veterinarianId) =>
+        await _context.VaccinationRecords
+            .Where(v => v.VeterinarianId == veterinarianId)
+            .Include(v => v.Pet)
+            .Include(v => v.Vaccine)
+            .Include(v => v.Veterinarian)
             .ToListAsync();
 }

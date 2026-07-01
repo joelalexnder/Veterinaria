@@ -22,23 +22,47 @@ public class GetVaccinationReportQueryHandler
     public async Task<byte[]> Handle(
         GetVaccinationReportQuery request, CancellationToken cancellationToken)
     {
-        var records = await _uow.VaccinationRecords.GetOverdueAsync();
+        // CAMBIO: antes era GetOverdueAsync() -> solo traía vencidas.
+        // Ahora traemos el historial completo con Pet, Vaccine y Veterinarian cargados.
+        var records = await _uow.VaccinationRecords.GetAllWithDetailsAsync();
 
-        var rows = records.Select(v => new VaccinationReportRow
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var rows = records.Select(v =>
         {
-            PetName          = v.Pet?.Name ?? "Sin nombre",
-            VaccineName      = v.Vaccine?.Name ?? "Sin vacuna",
-            VeterinarianName = v.Veterinarian?.FullName ?? "Sin veterinario",
-            BatchNumber      = v.BatchNumber,
-            ApplicationDate  = v.ApplicationDate,
-            NextBoosterDate  = v.NextBoosterDate,
-            DaysOverdue      = v.NextBoosterDate.HasValue
-                ? Math.Max(0, DateOnly.FromDateTime(DateTime.Today)
-                    .DayNumber - v.NextBoosterDate.Value.DayNumber)
-                : 0
+            string status = v.NextBoosterDate switch
+            {
+                null => "Sin refuerzo",
+                var d when d < today => "Vencida",
+                var d when d <= today.AddDays(30) => "Próxima",
+                _ => "Al día"
+            };
+
+            int daysOverdue = v.NextBoosterDate.HasValue && v.NextBoosterDate < today
+                ? today.DayNumber - v.NextBoosterDate.Value.DayNumber
+                : 0;
+
+            return new VaccinationReportRow
+            {
+                PetName          = v.Pet?.Name ?? "Sin nombre",
+                VaccineName      = v.Vaccine?.Name ?? "Sin vacuna",
+                VeterinarianName = v.Veterinarian?.FullName ?? "Sin veterinario",
+                BatchNumber      = v.BatchNumber,
+                ApplicationDate  = v.ApplicationDate,
+                NextBoosterDate  = v.NextBoosterDate,
+                DaysOverdue      = daysOverdue,
+                Status           = status
+            };
+        })
+        // Ordena: vencidas primero, luego próximas, luego al día
+        .OrderBy(r => r.Status switch
+        {
+            "Vencida" => 0,
+            "Próxima" => 1,
+            "Al día" => 2,
+            _ => 3
         });
 
         return _excelService.GenerateVaccinationsReport(rows);
     }
 }
-

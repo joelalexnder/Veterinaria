@@ -1,7 +1,6 @@
-using VetClinic.Domain.Ports.Repository;
 using MediatR;
 using AutoMapper;
-using VetClinic.Domain.Entities;
+using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Vaccination.Commands;
 
@@ -26,7 +25,7 @@ public class AddVaccineCatalogCommandHandler : IRequestHandler<AddVaccineCatalog
 
     public async Task<Unit> Handle(AddVaccineCatalogCommand request, CancellationToken cancellationToken)
     {
-        var vaccine = _mapper.Map<Vaccine>(request);
+        var vaccine = _mapper.Map<Domain.Entities.Vaccine>(request);
 
         await _uow.Vaccines.AddAsync(vaccine);
         await _uow.SaveChangesAsync();

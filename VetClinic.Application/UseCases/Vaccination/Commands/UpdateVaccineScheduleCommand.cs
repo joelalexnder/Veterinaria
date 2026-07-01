@@ -5,7 +5,7 @@ namespace VetClinic.Application.UseCases.Vaccination.Commands;
 
 public class UpdateVaccineScheduleCommand : IRequest<Unit>
 {
-    public int VaccinationRecordId { get; set; }
+    public int Id { get; set; }
     public DateOnly NextBoosterDate { get; set; }
 }
 
@@ -17,7 +17,7 @@ public class UpdateVaccineScheduleCommandHandler : IRequestHandler<UpdateVaccine
 
     public async Task<Unit> Handle(UpdateVaccineScheduleCommand request, CancellationToken cancellationToken)
     {
-        var record = await _uow.VaccinationRecords.GetByIdAsync(request.VaccinationRecordId);
+        var record = await _uow.VaccinationRecords.GetByIdAsync(request.Id);
         if (record is null) throw new Exception("Registro de vacunación no encontrado");
 
         record.NextBoosterDate = request.NextBoosterDate;
