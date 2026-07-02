@@ -12,12 +12,20 @@
         <div class="top-row px-4 d-flex justify-content-between align-items-center">
             @if (AuthState.IsAuthenticated)
             {
-                <span>👤 @AuthState.FullName (@AuthState.Role)</span>
-                <button class="btn btn-sm btn-outline-danger" @onclick="Logout">Cerrar sesión</button>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="user-avatar">@AuthState.FullName?.Substring(0, 1)</div>
+                    <div class="d-flex flex-column lh-sm">
+                        <span class="fw-semibold">@AuthState.FullName</span>
+                        <span class="text-muted small">@AuthState.Role</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" @onclick="Logout">
+                    <i class="bi bi-box-arrow-right"></i>Cerrar sesión
+                </button>
             }
         </div>
 
-        <article class="content px-4">
+        <article class="content px-4 fade-in">
             @Body
         </article>
     </main>

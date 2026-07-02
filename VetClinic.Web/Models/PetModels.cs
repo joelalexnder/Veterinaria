@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace VetClinic.Web.Models;
 
 public class PetDto
@@ -16,8 +18,13 @@ public class PetDto
 public class RegisterPetRequest
 {
     public int OwnerId { get; set; }
+
+    [Required(ErrorMessage = "El nombre es obligatorio")]
     public string Name { get; set; } = "";
+
+    [Required(ErrorMessage = "Selecciona una especie")]
     public string Species { get; set; } = "";
+
     public string? Breed { get; set; }
     public DateOnly? BirthDate { get; set; }
     public decimal? Weight { get; set; }

@@ -6,36 +6,50 @@
         @if (AuthState.IsAuthenticated)
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">🏠 Inicio</NavLink>
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <i class="bi bi-house-door-fill"></i> Inicio
+                </NavLink>
             </div>
 
             @if (AuthState.Role is "Administrador")
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="users">👥 Usuarios</NavLink>
+                    <NavLink class="nav-link" href="users">
+                        <i class="bi bi-people-fill"></i> Usuarios
+                    </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="user-management">🛡️ Administrar Usuarios</NavLink>
+                    <NavLink class="nav-link" href="user-management">
+                        <i class="bi bi-shield-lock-fill"></i> Administrar Usuarios
+                    </NavLink>
                 </div>
             }
 
             @if (AuthState.Role is "Administrador" or "Veterinario" or "Recepcionista")
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="owners">🧑 Propietarios</NavLink>
+                    <NavLink class="nav-link" href="owners">
+                        <i class="bi bi-person-vcard-fill"></i> Propietarios
+                    </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="appointments">📅 Citas</NavLink>
+                    <NavLink class="nav-link" href="appointments">
+                        <i class="bi bi-calendar-event-fill"></i> Citas
+                    </NavLink>
                 </div>
             }
 
             @if (AuthState.Role is "Administrador" or "Veterinario")
             {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="vaccination">💉 Vacunación</NavLink>
+                    <NavLink class="nav-link" href="vaccination">
+                        <i class="bi bi-shield-plus"></i> Vacunación
+                    </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="ai-summary">🤖 Resumen IA</NavLink>
+                    <NavLink class="nav-link" href="ai-summary">
+                        <i class="bi bi-robot"></i> Resumen IA
+                    </NavLink>
                 </div>
             }
         }

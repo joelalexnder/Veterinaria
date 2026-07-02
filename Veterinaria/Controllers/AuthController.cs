@@ -58,7 +58,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users")]
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Veterinario")]
     public async Task<IActionResult> GetUsersByRole([FromQuery] int roleId)
         => Ok(await _mediator.Send(new GetUserByRoleQuery { RoleId = roleId }));
 

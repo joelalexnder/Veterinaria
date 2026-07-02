@@ -1,6 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using AutoMapper;
-using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Pet.Commands;
@@ -8,8 +8,15 @@ namespace VetClinic.Application.UseCases.Pet.Commands;
 public class RegisterPetCommand : IRequest<Unit>
 {
     public int OwnerId { get; set; }
+
+    [Required(ErrorMessage = "El nombre de la mascota es obligatorio")]
+    [RegularExpression(@"^(?=.*[a-zA-ZÀ-ÿ]).+$", ErrorMessage = "El nombre debe contener al menos una letra")]
     public string Name { get; set; } = null!;
+
+    [Required(ErrorMessage = "La especie es obligatoria")]
+    [RegularExpression("^(Canino|Felino)$", ErrorMessage = "La especie debe ser 'Canino' o 'Felino'")]
     public string Species { get; set; } = null!;
+
     public string? Breed { get; set; }
     public DateOnly? BirthDate { get; set; }
     public decimal? Weight { get; set; }
@@ -32,7 +39,7 @@ public class RegisterPetCommandHandler : IRequestHandler<RegisterPetCommand, Uni
     public async Task<Unit> Handle(RegisterPetCommand request, CancellationToken cancellationToken)
     {
         var owner = await _uow.Owners.GetByIdAsync(request.OwnerId);
-        if (owner is null) throw new NotFoundException("Propietario no encontrado");
+        if (owner is null) throw new Exception("Propietario no encontrado");
 
         var pet = _mapper.Map<Domain.Entities.Pet>(request);
         pet.CreatedAt = DateTime.Now;

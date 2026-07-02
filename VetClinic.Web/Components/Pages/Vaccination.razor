@@ -23,90 +23,137 @@
 @rendermode InteractiveServer
 @using VetClinic.Web.Models
 
-<h3>💉 Vacunación</h3>
+<div class="page-header">
+    <i class="bi bi-shield-plus"></i>
+    <h3>Vacunación</h3>
+</div>
 
-<div class="row">
+<div class="row g-3">
     <div class="col-md-5">
-        <h5>Agregar vacuna al catálogo</h5>
-        <EditForm Model="vaccineModel" OnValidSubmit="AddVaccine">
-            <InputText class="form-control mb-2" placeholder="Nombre" @bind-Value="vaccineModel.Name" />
-            <InputText class="form-control mb-2" placeholder="Especie" @bind-Value="vaccineModel.Species" />
-            <label class="form-label small">Edad mínima (días)</label>
-            <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.MinAgeDays" />
-            <label class="form-label small">Intervalo de refuerzo (días)</label>
-            <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.BoosterIntervalDays" />
-            
-            <button class="btn btn-primary w-100">Agregar</button>
-        </EditForm>
-        @if (vaccineMsg != null) { <div class="alert alert-info mt-2">@vaccineMsg</div> }
+        <div class="card card-accent-primary">
+            <div class="section-title"><i class="bi bi-clipboard2-plus"></i> Agregar vacuna al catálogo</div>
+            <EditForm Model="vaccineModel" OnValidSubmit="AddVaccine">
+                <label class="form-label small">Nombre</label>
+                <InputText class="form-control mb-2" @bind-Value="vaccineModel.Name" />
 
-        <hr />
+                <label class="form-label small">Especie</label>
+                <select class="form-select mb-2" @bind="vaccineModel.Species">
+                    <option value="">-- Especie --</option>
+                    <option value="Perro">Perro</option>
+                    <option value="Gato">Gato</option>
+                </select>
 
-        <h5>Aplicar vacuna</h5>
-        <EditForm Model="recordModel" OnValidSubmit="RegisterVaccination">
-            <InputNumber class="form-control mb-2" placeholder="Id Mascota" @bind-Value="recordModel.PetId" />
+                <label class="form-label small">Edad mínima (días)</label>
+                <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.MinAgeDays" />
+                <label class="form-label small">Intervalo de refuerzo (días)</label>
+                <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.BoosterIntervalDays" />
 
-            <select class="form-select mb-2" @bind="recordModel.VaccineId">
-                <option value="0">-- Vacuna --</option>
-                @foreach (var v in catalog)
-                {
-                    <option value="@v.Id">@v.Name (@v.Species)</option>
-                }
-            </select>
+                <button class="btn btn-primary w-100"><i class="bi bi-check-circle"></i>Agregar</button>
+            </EditForm>
+            @if (vaccineMsg != null) { <div class="alert alert-info mt-3 mb-0">@vaccineMsg</div> }
+        </div>
 
-            <InputNumber class="form-control mb-2" placeholder="Id Veterinario" @bind-Value="recordModel.VeterinarianId" />
-            <InputText class="form-control mb-2" placeholder="Lote" @bind-Value="recordModel.BatchNumber" />
-            <label class="form-label small">Fecha de aplicación</label>
-            <input type="date" class="form-control mb-2" value="@applicationDateStr" @onchange="@(e => applicationDateStr = e.Value?.ToString() ?? applicationDateStr)" />
-            <label class="form-label small">Próximo refuerzo</label>
-            <input type="date" class="form-control mb-2" value="@boosterDateStr" @onchange="@(e => boosterDateStr = e.Value?.ToString() ?? boosterDateStr)" />
-            
-            
-            <button class="btn btn-success w-100">Aplicar vacuna</button>
-        </EditForm>
-        @if (recordMsg != null) { <div class="alert alert-info mt-2">@recordMsg</div> }
+        <div class="card card-accent-success">
+            <div class="section-title"><i class="bi bi-syringe"></i> Aplicar vacuna</div>
+            <EditForm Model="recordModel" OnValidSubmit="RegisterVaccination">
+                <label class="form-label small">Propietario</label>
+                <select class="form-select mb-2" value="@selectedOwnerId" @onchange="OnOwnerChanged">
+                    <option value="0">-- Selecciona propietario --</option>
+                    @foreach (var o in owners)
+                    {
+                        <option value="@o.Id">@o.FullName</option>
+                    }
+                </select>
+
+                <label class="form-label small">Mascota</label>
+                <select class="form-select mb-2" value="@recordModel.PetId" @onchange="OnPetChanged">
+                    <option value="0">-- Selecciona mascota --</option>
+                    @foreach (var p in pets)
+                    {
+                        <option value="@p.Id">@p.Name (@p.Species)</option>
+                    }
+                </select>
+
+                <label class="form-label small">Vacuna</label>
+                <select class="form-select mb-2" @bind="recordModel.VaccineId">
+                    <option value="0">-- Vacuna --</option>
+                    @foreach (var v in FilteredCatalog)
+                    {
+                        <option value="@v.Id">@v.Name (@v.Species)</option>
+                    }
+                </select>
+
+                <label class="form-label small">Veterinario</label>
+                <select class="form-select mb-2" @bind="recordModel.VeterinarianId">
+                    <option value="0">-- Selecciona veterinario --</option>
+                    @foreach (var v in veterinarians)
+                    {
+                        <option value="@v.Id">@v.FullName</option>
+                    }
+                </select>
+
+                <label class="form-label small">Lote</label>
+                <select class="form-select mb-2" @bind="recordModel.BatchNumber">
+                    <option value="">-- Selecciona lote --</option>
+                    @foreach (var lot in availableLots)
+                    {
+                        <option value="@lot">@lot</option>
+                    }
+                </select>
+
+                <label class="form-label small">Fecha de aplicación</label>
+                <input type="date" class="form-control mb-2" value="@applicationDateStr" @onchange="@(e => applicationDateStr = e.Value?.ToString() ?? applicationDateStr)" />
+                <label class="form-label small">Próximo refuerzo</label>
+                <input type="date" class="form-control mb-2" value="@boosterDateStr" @onchange="@(e => boosterDateStr = e.Value?.ToString() ?? boosterDateStr)" />
+
+                <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i>Aplicar vacuna</button>
+            </EditForm>
+            @if (recordMsg != null) { <div class="alert alert-info mt-3 mb-0">@recordMsg</div> }
+        </div>
     </div>
 
     <div class="col-md-7">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="mb-0">Vacunaciones</h5>
-            <div>
-                <button class="btn btn-sm btn-outline-secondary" @onclick="LoadOverdue">🔄 Actualizar</button>
-                <button class="btn btn-sm btn-outline-success ms-2" @onclick="DownloadReport" disabled="@downloading">
-                    @(downloading ? "Generando..." : "📊 Descargar reporte Excel")
-                </button>
+        <div class="card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-title mb-0"><i class="bi bi-list-check"></i> Vacunaciones</div>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LoadOverdue"><i class="bi bi-arrow-clockwise"></i>Actualizar</button>
+                    <button class="btn btn-sm btn-outline-success ms-2" @onclick="DownloadReport" disabled="@downloading">
+                        <i class="bi bi-file-earmark-excel"></i>@(downloading ? "Generando..." : "Reporte")
+                    </button>
+                </div>
             </div>
-        </div>
-        @if (downloadError != null) { <div class="alert alert-danger py-2">@downloadError</div> }
-        <table class="table table-sm table-striped">
-            <thead>
-                <tr>
-                    <th>Mascota</th>
-                    <th>Vacuna</th>
-                    <th>Próximo refuerzo</th>
-                    <th>Días vencida</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var r in overdue)
-                {
-                    <tr class="@(r.Status switch
-                                 {
-                                     "Vencida" => "table-danger",
-                                     "Próxima" => "table-warning",
-                                     "Al día" => "table-success",
-                                     _ => "table-secondary"
-                                 })">
-                        <td>@r.PetName</td>
-                        <td>@r.VaccineName</td>
-                        <td>@r.NextBoosterDate</td>
-                        <td>@r.DaysOverdue</td>
-                        <td>@r.Status</td>
+            @if (downloadError != null) { <div class="alert alert-danger py-2">@downloadError</div> }
+            <table class="table table-sm table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Mascota</th>
+                        <th>Vacuna</th>
+                        <th>Próximo refuerzo</th>
+                        <th>Días vencida</th>
+                        <th>Estado</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var r in overdue)
+                    {
+                        <tr class="@(r.Status switch
+                                     {
+                                         "Vencida" => "table-danger",
+                                         "Próxima" => "table-warning",
+                                         "Al día" => "table-success",
+                                         _ => "table-secondary"
+                                     })">
+                            <td>@r.PetName</td>
+                            <td>@r.VaccineName</td>
+                            <td>@r.NextBoosterDate</td>
+                            <td>@r.DaysOverdue</td>
+                            <td>@r.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -115,6 +162,10 @@
     private RegisterVaccinationRequest recordModel = new();
     private List<VaccineDto> catalog = new();
     private List<VaccinationRecordDto> overdue = new();
+    private List<OwnerDto> owners = new();
+    private List<PetDto> pets = new();
+    private List<UserDto> veterinarians = new();
+    private int selectedOwnerId;
     private string applicationDateStr = DateTime.Today.ToString("yyyy-MM-dd");
     private string boosterDateStr = DateTime.Today.AddYears(1).ToString("yyyy-MM-dd");
     private string? vaccineMsg;
@@ -122,10 +173,61 @@
     private bool downloading;
     private string? downloadError;
 
+    private static readonly List<string> availableLots = new()
+    {
+        "LOT-2026-001", "LOT-2026-002", "LOT-2026-003", "LOT-2026-004", "LOT-2026-005"
+    };
+
+    private static readonly Dictionary<string, string> SpeciesMap = new()
+    {
+        ["Canino"] = "Perro",
+        ["Felino"] = "Gato"
+    };
+
+    private List<VaccineDto> FilteredCatalog
+    {
+        get
+        {
+            var selectedPet = pets.FirstOrDefault(p => p.Id == recordModel.PetId);
+            if (selectedPet is null) return catalog;
+
+            var mappedSpecies = SpeciesMap.TryGetValue(selectedPet.Species, out var mapped)
+                ? mapped
+                : selectedPet.Species;
+
+            return catalog.Where(v => v.Species.Equals(mappedSpecies, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         catalog = await Api.GetVaccineCatalogAsync();
+        owners = await Api.GetOwnersAsync();
+
+        if (AuthState.Role == "Administrador")
+        {
+            var allUsers = await Api.GetAllUsersAsync();
+            veterinarians = allUsers.Where(u => u.RoleName == "Veterinario").ToList();
+        }
+
         await LoadOverdue();
+    }
+
+    private async Task OnOwnerChanged(ChangeEventArgs e)
+    {
+        selectedOwnerId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0;
+        recordModel.PetId = 0;
+        recordModel.VaccineId = 0;
+
+        pets = selectedOwnerId > 0
+            ? await Api.GetPetsByOwnerAsync(selectedOwnerId)
+            : new List<PetDto>();
+    }
+
+    private void OnPetChanged(ChangeEventArgs e)
+    {
+        recordModel.PetId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0;
+        recordModel.VaccineId = 0;
     }
 
     private async Task LoadOverdue() => overdue = await Api.GetAllVaccinationsAsync();
@@ -143,6 +245,12 @@
 
     private async Task RegisterVaccination()
     {
+        if (recordModel.PetId == 0 || recordModel.VaccineId == 0 || recordModel.VeterinarianId == 0)
+        {
+            recordMsg = "❌ Completa mascota, vacuna y veterinario";
+            return;
+        }
+
         recordModel.ApplicationDate = DateOnly.Parse(applicationDateStr);
         recordModel.NextBoosterDate = DateOnly.Parse(boosterDateStr);
 
@@ -151,6 +259,8 @@
         if (success)
         {
             recordModel = new();
+            selectedOwnerId = 0;
+            pets = new();
             await LoadOverdue();
         }
     }

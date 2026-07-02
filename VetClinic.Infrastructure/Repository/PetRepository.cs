@@ -22,6 +22,22 @@ public class PetRepository : Repository<Pet>, IPetRepository
         await _context.Pets
             .Include(p => p.Owner)
             .Include(p => p.MedicalRecords)
-                .ThenInclude(mr => mr.Veterinarian)
+            .ThenInclude(mr => mr.Veterinarian)
             .FirstOrDefaultAsync(p => p.Id == petId);
+
+    public async Task<IEnumerable<Pet>> SearchAsync(string? name, string? species, int? ownerId)
+    {
+        var query = _context.Pets.Include(p => p.Owner).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(name))
+            query = query.Where(p => EF.Functions.ILike(p.Name, $"%{name}%"));
+
+        if (!string.IsNullOrWhiteSpace(species))
+            query = query.Where(p => p.Species == species);
+
+        if (ownerId.HasValue)
+            query = query.Where(p => p.OwnerId == ownerId.Value);
+
+        return await query.OrderBy(p => p.Name).ToListAsync();
+    }
 }

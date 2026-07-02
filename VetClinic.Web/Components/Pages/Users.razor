@@ -22,52 +22,64 @@
 @rendermode InteractiveServer
 @using VetClinic.Web.Models
 
-<h3>👥 Gestión de Usuarios</h3>
+<div class="page-header">
+    <i class="bi bi-person-badge"></i>
+    <h3>Gestión de Usuarios</h3>
+</div>
 
-<div class="row">
+<div class="row g-3">
     <div class="col-md-5">
-        <h5>Crear nuevo usuario</h5>
-        <EditForm Model="model" OnValidSubmit="Register">
-            <label class="form-label small">Nombre completo</label>
-            <InputText class="form-control mb-2" @bind-Value="model.FullName" />
+        <div class="card card-accent-primary">
+            <div class="section-title"><i class="bi bi-person-plus-fill"></i> Crear nuevo usuario</div>
+            <EditForm Model="model" OnValidSubmit="Register">
+                <label class="form-label small">Nombre completo</label>
+                <InputText class="form-control mb-2" @bind-Value="model.FullName" />
 
-            <label class="form-label small">Email</label>
-            <InputText class="form-control mb-2" @bind-Value="model.Email" />
+                <label class="form-label small">Email</label>
+                <InputText class="form-control mb-2" @bind-Value="model.Email" />
 
-            <label class="form-label small">Contraseña</label>
-            <InputText type="password" class="form-control mb-2" @bind-Value="model.Password" />
+                <label class="form-label small">Contraseña</label>
+                <InputText type="password" class="form-control mb-2" @bind-Value="model.Password" />
 
-            <label class="form-label small">Rol</label>
-            <select class="form-select mb-2" @bind="model.RoleId">
-                <option value="0">-- Selecciona rol --</option>
-                <option value="1">Administrador</option>
-                <option value="2">Veterinario</option>
-                <option value="3">Recepcionista</option>
-                <option value="4">Estilista</option>
-            </select>
-
-            @if (model.RoleId == 2)
-            {
-                <div class="alert alert-secondary py-2">
-                    Este rol requiere datos de especialista para aparecer en el agendamiento de citas.
-                </div>
-
-                <label class="form-label small">Área de servicio</label>
-                <select class="form-select mb-2" @bind="specialistData.ServiceAreaId">
-                    <option value="0">-- Selecciona área --</option>
-                    @foreach (var a in areas)
-                    {
-                        <option value="@a.Id">@a.Name</option>
-                    }
+                <label class="form-label small">Rol</label>
+                <select class="form-select mb-2" @bind="model.RoleId">
+                    <option value="0">-- Selecciona rol --</option>
+                    <option value="1">Administrador</option>
+                    <option value="2">Veterinario</option>
+                    <option value="3">Recepcionista</option>
+                    <option value="4">Estilista</option>
                 </select>
 
-                <label class="form-label small">Especialidad</label>
-                <InputText class="form-control mb-2" placeholder="Ej: Cirugía General, Medicina General" @bind-Value="specialistData.SpecialtyName" />
-            }
+                @if (model.RoleId == 2)
+                {
+                    <div class="alert alert-secondary py-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Este rol requiere datos de especialista para aparecer en el agendamiento de citas.</span>
+                    </div>
 
-            <button class="btn btn-primary w-100">Crear usuario</button>
-        </EditForm>
-        @if (msg != null) { <div class="alert alert-info mt-2">@msg</div> }
+                    <label class="form-label small">Área de servicio</label>
+                    <select class="form-select mb-2" value="@specialistData.ServiceAreaId" @onchange="OnAreaChanged">
+                        <option value="0">-- Selecciona área --</option>
+                        @foreach (var a in areas)
+                        {
+                            <option value="@a.Id">@a.Name</option>
+                        }
+                    </select>
+
+                    <label class="form-label small">Especialidad</label>
+                    <select class="form-select mb-2" @bind="specialistData.SpecialtyName">
+                        <option value="">-- Selecciona especialidad --</option>
+                        @foreach (var sp in availableSpecialties)
+                        {
+                            <option value="@sp">@sp</option>
+                        }
+                    </select>
+                }
+
+                <button class="btn btn-primary w-100"><i class="bi bi-check-circle"></i>Crear usuario</button>
+            </EditForm>
+            @if (msg != null) { <div class="alert alert-info mt-3 mb-0">@msg</div> }
+        </div>
     </div>
 </div>
 
@@ -75,11 +87,31 @@
     private RegisterUserRequest model = new();
     private RegisterSpecialistRequest specialistData = new();
     private List<ServiceAreaDto> areas = new();
+    private List<string> availableSpecialties = new();
     private string? msg;
+
+    private static readonly Dictionary<string, List<string>> SpecialtiesByArea = new()
+    {
+        ["Medicina General"] = new() { "Medicina Interna", "Medicina Preventiva", "Medicina General" },
+        ["Cirugía"] = new() { "Cirugía General", "Cirugía Ortopédica", "Cirugía de Tejidos Blandos" },
+        ["Dermatología"] = new() { "Dermatología Clínica", "Alergología", "Dermatopatología" },
+        ["Odontología"] = new() { "Odontología General", "Endodoncia Veterinaria", "Cirugía Oral" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
         areas = await Api.GetServiceAreasAsync();
+    }
+
+    private void OnAreaChanged(ChangeEventArgs e)
+    {
+        specialistData.ServiceAreaId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0;
+        specialistData.SpecialtyName = "";
+
+        var areaName = areas.FirstOrDefault(a => a.Id == specialistData.ServiceAreaId)?.Name;
+        availableSpecialties = areaName != null && SpecialtiesByArea.TryGetValue(areaName, out var list)
+            ? list
+            : new List<string>();
     }
 
     private async Task Register()
@@ -120,5 +152,6 @@
 
         model = new();
         specialistData = new();
+        availableSpecialties = new();
     }
 }

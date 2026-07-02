@@ -15,80 +15,96 @@
 @rendermode InteractiveServer
 @using VetClinic.Web.Models
 
-<h3>📅 Citas</h3>
+<div class="page-header">
+    <i class="bi bi-calendar-event"></i>
+    <h3>Citas</h3>
+</div>
 
-<div class="row">
+<div class="row g-3">
     <div class="col-md-5">
-        <h5>Agendar Cita</h5>
-        <EditForm Model="model" OnValidSubmit="Schedule">
-            <select class="form-select mb-2" value="@selectedOwnerId" @onchange="OnOwnerChanged">
-                <option value="0">-- Propietario --</option>
-                @foreach (var o in owners)
-                {
-                    <option value="@o.Id">@o.FullName</option>
-                }
-            </select>
+        <div class="card card-accent-primary">
+            <div class="section-title"><i class="bi bi-calendar-plus"></i> Agendar Cita</div>
+            <EditForm Model="model" OnValidSubmit="Schedule">
+                <label class="form-label small">Propietario</label>
+                <select class="form-select mb-2" value="@selectedOwnerId" @onchange="OnOwnerChanged">
+                    <option value="0">-- Propietario --</option>
+                    @foreach (var o in owners)
+                    {
+                        <option value="@o.Id">@o.FullName</option>
+                    }
+                </select>
 
-            <select class="form-select mb-2" @bind="model.PetId">
-                <option value="0">-- Mascota --</option>
-                @foreach (var p in pets)
-                {
-                    <option value="@p.Id">@p.Name</option>
-                }
-            </select>
+                <label class="form-label small">Mascota</label>
+                <select class="form-select mb-2" @bind="model.PetId">
+                    <option value="0">-- Mascota --</option>
+                    @foreach (var p in pets)
+                    {
+                        <option value="@p.Id">@p.Name</option>
+                    }
+                </select>
 
-            <select class="form-select mb-2" value="@model.ServiceAreaId" @onchange="OnServiceAreaChanged">
-                <option value="0">-- Área de servicio --</option>
-                @foreach (var a in areas)
-                {
-                    <option value="@a.Id">@a.Name</option>
-                }
-            </select>
+                <label class="form-label small">Área de servicio</label>
+                <select class="form-select mb-2" value="@model.ServiceAreaId" @onchange="OnServiceAreaChanged">
+                    <option value="0">-- Área de servicio --</option>
+                    @foreach (var a in areas)
+                    {
+                        <option value="@a.Id">@a.Name</option>
+                    }
+                </select>
 
-            <select class="form-select mb-2" @bind="model.SpecialistId">
-                <option value="0">-- Especialista --</option>
-                @foreach (var s in specialists)
-                {
-                    <option value="@s.Id">@s.FullName (@s.SpecialtyName)</option>
-                }
-            </select>
+                <label class="form-label small">Especialista</label>
+                <select class="form-select mb-2" @bind="model.SpecialistId">
+                    <option value="0">-- Especialista --</option>
+                    @foreach (var s in specialists)
+                    {
+                        <option value="@s.Id">@s.FullName (@s.SpecialtyName)</option>
+                    }
+                </select>
 
-            <input type="date" class="form-control mb-2" value="@dateStr" @onchange="@(e => dateStr = e.Value?.ToString() ?? dateStr)" />
-            <div class="d-flex gap-2 mb-2">
-                <input type="time" class="form-control" value="@startStr" @onchange="@(e => startStr = e.Value?.ToString() ?? startStr)" />
-                <input type="time" class="form-control" value="@endStr" @onchange="@(e => endStr = e.Value?.ToString() ?? endStr)" />
-            </div>
+                <label class="form-label small">Fecha</label>
+                <input type="date" class="form-control mb-2" value="@dateStr" @onchange="@(e => dateStr = e.Value?.ToString() ?? dateStr)" />
 
-            <button class="btn btn-primary w-100">Agendar</button>
-        </EditForm>
+                <label class="form-label small">Horario</label>
+                <div class="d-flex gap-2 mb-2">
+                    <input type="time" class="form-control" value="@startStr" @onchange="@(e => startStr = e.Value?.ToString() ?? startStr)" />
+                    <input type="time" class="form-control" value="@endStr" @onchange="@(e => endStr = e.Value?.ToString() ?? endStr)" />
+                </div>
 
-        @if (msg != null) { <div class="alert alert-info mt-2">@msg</div> }
+                <button class="btn btn-primary w-100"><i class="bi bi-check-circle"></i>Agendar</button>
+            </EditForm>
+
+            @if (msg != null) { <div class="alert alert-info mt-3 mb-0">@msg</div> }
+        </div>
     </div>
 
     <div class="col-md-7">
-        <h5>Citas del día</h5>
-        <div class="d-flex align-items-center gap-2 mb-2">
-            <input type="date" class="form-control" style="width:200px" value="@filterDateStr" @onchange="OnFilterDateChanged" />
-            <button class="btn btn-sm btn-outline-success" @onclick="DownloadReport" disabled="@downloading">
-                @(downloading ? "Generando..." : "📊 Descargar reporte Excel")
-            </button>
+        <div class="card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="section-title mb-0"><i class="bi bi-list-check"></i> Citas del día</div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="date" class="form-control form-control-sm" style="width:160px" value="@filterDateStr" @onchange="OnFilterDateChanged" />
+                    <button class="btn btn-sm btn-outline-success" @onclick="DownloadReport" disabled="@downloading">
+                        <i class="bi bi-file-earmark-excel"></i>@(downloading ? "Generando..." : "Reporte")
+                    </button>
+                </div>
+            </div>
+            @if (downloadError != null) { <div class="alert alert-danger py-2">@downloadError</div> }
+            <table class="table table-sm table-striped align-middle mb-0">
+                <thead><tr><th>Mascota</th><th>Especialista</th><th>Área</th><th>Hora</th><th>Estado</th></tr></thead>
+                <tbody>
+                    @foreach (var a in appointments)
+                    {
+                        <tr>
+                            <td>@a.PetName</td>
+                            <td>@a.SpecialistName</td>
+                            <td>@a.ServiceAreaName</td>
+                            <td>@a.StartTime - @a.EndTime</td>
+                            <td><span class="badge bg-warning">@a.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-        @if (downloadError != null) { <div class="alert alert-danger py-2">@downloadError</div> }
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Mascota</th><th>Especialista</th><th>Área</th><th>Hora</th><th>Estado</th></tr></thead>
-            <tbody>
-                @foreach (var a in appointments)
-                {
-                    <tr>
-                        <td>@a.PetName</td>
-                        <td>@a.SpecialistName</td>
-                        <td>@a.ServiceAreaName</td>
-                        <td>@a.StartTime - @a.EndTime</td>
-                        <td><span class="badge bg-warning">@a.Status</span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
     </div>
 </div>
 
@@ -141,6 +157,7 @@
         filterDateStr = e.Value?.ToString() ?? filterDateStr;
         await LoadAppointments();
     }
+
     private async Task LoadAppointments()
     {
         var date = DateOnly.Parse(filterDateStr);

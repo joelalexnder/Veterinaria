@@ -1,33 +1,58 @@
 @page "/login"
+@layout EmptyLayout
 @inject VetClinic.Web.Services.ApiClient Api
 @inject VetClinic.Web.Services.AuthStateService AuthState
 @inject NavigationManager Nav
 @rendermode InteractiveServer
+@using VetClinic.Web.Components.Layout
 @using VetClinic.Web.Models
 
 <PageTitle>Login - VetClinic</PageTitle>
 
-<div class="d-flex justify-content-center align-items-center" style="height:80vh;">
-    <div class="card p-4" style="width:350px;">
-        <h3 class="mb-3">🐾 VetClinic Pro</h3>
+<div class="login-wrapper" style="min-height:100vh; width:100%; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4338ca 100%);">
+    <div class="login-blob login-blob-1"></div>
+    <div class="login-blob login-blob-2"></div>
+
+    <div class="card login-card p-4 fade-in-up" style="width:360px; max-width:90vw; margin:0 auto; border-radius:18px; box-shadow:0 25px 70px rgba(0,0,0,0.35); border:none; background:white; position:relative; z-index:1;">
+        <div class="login-logo"><i class="bi bi-heart-pulse-fill"></i></div>
+        <h3 class="mb-1 text-center">VetClinic Pro</h3>
+        <p class="text-center text-muted small mb-4">Ingresa a tu cuenta</p>
 
         <EditForm Model="model" OnValidSubmit="HandleLogin">
-            <div class="mb-2">
-                <label>Email</label>
-                <InputText class="form-control" @bind-Value="model.Email" />
-            </div>
             <div class="mb-3">
-                <label>Contraseña</label>
-                <InputText type="password" class="form-control" @bind-Value="model.Password" />
+                <label class="form-label small">Email</label>
+                <div class="input-icon-group">
+                    <i class="bi bi-envelope"></i>
+                    <InputText class="form-control" @bind-Value="model.Email" placeholder="tu@email.com" />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small">Contraseña</label>
+                <div class="input-icon-group">
+                    <i class="bi bi-lock"></i>
+                    <InputText type="password" class="form-control" @bind-Value="model.Password" placeholder="••••••••" />
+                </div>
             </div>
 
             @if (!string.IsNullOrEmpty(error))
             {
-                <div class="alert alert-danger py-2">@error</div>
+                <div class="alert alert-danger py-2 d-flex align-items-center gap-2 shake">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <span>@error</span>
+                </div>
             }
 
             <button type="submit" class="btn btn-primary w-100" disabled="@loading">
-                @(loading ? "Ingresando..." : "Ingresar")
+                @if (loading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Ingresando...</span>
+                }
+                else
+                {
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Ingresar</span>
+                }
             </button>
         </EditForm>
     </div>

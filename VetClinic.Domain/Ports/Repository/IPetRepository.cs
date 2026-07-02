@@ -7,4 +7,5 @@ public interface IPetRepository : IRepository<Pet>
     Task<IEnumerable<Pet>> GetByOwnerIdAsync(int ownerId);
     Task<IEnumerable<Pet>> GetBySpeciesAsync(string species);
     Task<Pet?> GetWithMedicalHistoryAsync(int petId);
+    Task<IEnumerable<Pet>> SearchAsync(string? name, string? species, int? ownerId);
 }

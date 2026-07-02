@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using VetClinic.Web.Models;
 
 namespace VetClinic.Web.Services;
@@ -22,6 +23,37 @@ public class ApiClient
             : new AuthenticationHeaderValue("Bearer", _authState.Token);
     }
 
+    // Parsea tanto el formato ProblemDetails de ASP.NET (errores de validación como
+    // [Required]/[RegularExpression]) como el formato { status, message, details } de
+    // tu ErrorHandlingMiddleware, y devuelve siempre un mensaje legible.
+    private static async Task<string> ExtractErrorMessage(HttpResponseMessage response)
+    {
+        var raw = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
+
+            if (root.TryGetProperty("errors", out var errors))
+            {
+                var messages = new List<string>();
+                foreach (var field in errors.EnumerateObject())
+                    foreach (var msg in field.Value.EnumerateArray())
+                        messages.Add(msg.GetString() ?? "");
+                if (messages.Count > 0) return string.Join(" ", messages);
+            }
+
+            if (root.TryGetProperty("details", out var details) && details.GetString() is string d && !string.IsNullOrWhiteSpace(d))
+                return d;
+
+            if (root.TryGetProperty("message", out var message) && message.GetString() is string m && !string.IsNullOrWhiteSpace(m))
+                return m;
+        }
+        catch { /* no era JSON válido, devolvemos el texto crudo */ }
+
+        return string.IsNullOrWhiteSpace(raw) ? "Ocurrió un error inesperado" : raw;
+    }
+
     // ── Auth ──────────────────────────────────
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
@@ -29,56 +61,42 @@ public class ApiClient
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<AuthResponse>();
     }
+
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
         ApplyAuthHeader();
         var all = new List<UserDto>();
-
-        // No hay endpoint "GetAll", así que recorremos los 4 roles existentes
         for (int roleId = 1; roleId <= 4; roleId++)
         {
             var users = await _http.GetFromJsonAsync<List<UserDto>>($"api/Auth/users?roleId={roleId}") ?? new();
             all.AddRange(users);
         }
-
         return all;
     }
+
     public async Task<(bool Success, string Error)> DeleteUserAsync(int userId)
     {
         ApplyAuthHeader();
         var response = await _http.DeleteAsync($"api/Auth/users/{userId}");
-
-        if (response.IsSuccessStatusCode)
-            return (true, "");
-
-        var body = await response.Content.ReadAsStringAsync();
-
-        // Tu middleware devuelve JSON con "details" — lo extraemos
-        try
-        {
-            var json = System.Text.Json.JsonDocument.Parse(body);
-            var details = json.RootElement.TryGetProperty("details", out var d) ? d.GetString() : "Error desconocido";
-            return (false, details ?? "Error desconocido");
-        }
-        catch
-        {
-            return (false, body);
-        }
+        if (response.IsSuccessStatusCode) return (true, "");
+        var error = await ExtractErrorMessage(response);
+        return (false, error);
     }
+
     public async Task<bool> AssignRoleAsync(AssignRoleRequest request)
     {
         ApplyAuthHeader();
         var response = await _http.PutAsJsonAsync("api/Auth/update-role", request);
         return response.IsSuccessStatusCode;
     }
-    
+
     public async Task<(bool Success, int Id, string Error)> RegisterUserAsync(RegisterUserRequest request)
     {
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Auth/register", request);
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
+            var error = await ExtractErrorMessage(response);
             return (false, 0, error);
         }
         var json = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
@@ -105,7 +123,16 @@ public class ApiClient
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Owner", request);
         if (response.IsSuccessStatusCode) return (true, "");
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ExtractErrorMessage(response);
+        return (false, error);
+    }
+
+    public async Task<(bool Success, string Error)> DeleteOwnerAsync(int id)
+    {
+        ApplyAuthHeader();
+        var response = await _http.DeleteAsync($"api/Owner/{id}");
+        if (response.IsSuccessStatusCode) return (true, "");
+        var error = await ExtractErrorMessage(response);
         return (false, error);
     }
 
@@ -121,7 +148,7 @@ public class ApiClient
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Pet", request);
         if (response.IsSuccessStatusCode) return (true, "");
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ExtractErrorMessage(response);
         return (false, error);
     }
 
@@ -158,7 +185,7 @@ public class ApiClient
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Appointment", request);
         if (response.IsSuccessStatusCode) return (true, "");
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ExtractErrorMessage(response);
         return (false, error);
     }
 
@@ -181,7 +208,7 @@ public class ApiClient
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Vaccination", request);
         if (response.IsSuccessStatusCode) return (true, "");
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ExtractErrorMessage(response);
         return (false, error);
     }
 
@@ -191,15 +218,13 @@ public class ApiClient
         return await _http.GetFromJsonAsync<List<VaccinationRecordDto>>("api/Vaccination/overdue") ?? new();
     }
 
-    // ── AI ────────────────────────────────────
-    public async Task<string?> GetPetHealthSummaryAsync(int petId)
+    public async Task<List<VaccinationRecordDto>> GetAllVaccinationsAsync()
     {
         ApplyAuthHeader();
-        var response = await _http.GetAsync($"api/Pet/{petId}/health-summary-ai");
-        if (!response.IsSuccessStatusCode) return null;
-        var json = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return json != null && json.TryGetValue("summary", out var summary) ? summary : null;
+        return await _http.GetFromJsonAsync<List<VaccinationRecordDto>>("api/Vaccination/all") ?? new();
     }
+
+    // ── Reports ───────────────────────────────
     public async Task<byte[]?> GetVaccinationsReportAsync()
     {
         ApplyAuthHeader();
@@ -207,7 +232,7 @@ public class ApiClient
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadAsByteArrayAsync();
     }
- 
+
     public async Task<byte[]?> GetAppointmentsReportAsync(DateOnly? date = null)
     {
         ApplyAuthHeader();
@@ -218,9 +243,14 @@ public class ApiClient
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadAsByteArrayAsync();
     }
-    public async Task<List<VaccinationRecordDto>> GetAllVaccinationsAsync()
+
+    // ── AI ────────────────────────────────────
+    public async Task<string?> GetPetHealthSummaryAsync(int petId)
     {
         ApplyAuthHeader();
-        return await _http.GetFromJsonAsync<List<VaccinationRecordDto>>("api/Vaccination/all") ?? new();
+        var response = await _http.GetAsync($"api/Pet/{petId}/health-summary-ai");
+        if (!response.IsSuccessStatusCode) return null;
+        var json = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+        return json != null && json.TryGetValue("summary", out var summary) ? summary : null;
     }
 }

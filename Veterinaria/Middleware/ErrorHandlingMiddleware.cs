@@ -54,10 +54,28 @@ public class ErrorHandlingMiddleware
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogWarning("Conflicto de base de datos: {Message}", ex.InnerException?.Message ?? ex.Message);
-            await WriteResponse(context, HttpStatusCode.Conflict,
-                "Conflicto",
-                "No se puede eliminar este registro porque tiene datos relacionados (citas, historial médico, vacunaciones, etc.). Elimina o reasigna esos datos primero.");
+            var pgMessage = ex.InnerException?.Message ?? ex.Message;
+            _logger.LogWarning("Conflicto de base de datos: {Message}", pgMessage);
+
+            if (pgMessage.Contains("duplicate key value violates unique constraint", StringComparison.OrdinalIgnoreCase))
+            {
+                var friendlyField = ExtractDuplicateField(pgMessage);
+                await WriteResponse(context, HttpStatusCode.Conflict,
+                    "Conflicto",
+                    $"Ya existe un registro con ese {friendlyField}. Verifica los datos ingresados.");
+            }
+            else if (pgMessage.Contains("violates foreign key constraint", StringComparison.OrdinalIgnoreCase))
+            {
+                await WriteResponse(context, HttpStatusCode.Conflict,
+                    "Conflicto",
+                    "No se puede eliminar este registro porque tiene datos relacionados (citas, historial médico, vacunaciones, etc.). Elimina o reasigna esos datos primero.");
+            }
+            else
+            {
+                await WriteResponse(context, HttpStatusCode.Conflict,
+                    "Conflicto",
+                    "No se pudo completar la operación debido a un conflicto con los datos existentes.");
+            }
         }
         catch (Exception ex)
         {
@@ -65,6 +83,14 @@ public class ErrorHandlingMiddleware
             await WriteResponse(context, HttpStatusCode.InternalServerError,
                 "Error interno del servidor", ex.Message);
         }
+    }
+
+    private static string ExtractDuplicateField(string pgMessage)
+    {
+        if (pgMessage.Contains("dni", StringComparison.OrdinalIgnoreCase)) return "DNI";
+        if (pgMessage.Contains("email", StringComparison.OrdinalIgnoreCase)) return "email";
+        if (pgMessage.Contains("user_id", StringComparison.OrdinalIgnoreCase)) return "usuario (ya es especialista)";
+        return "dato";
     }
 
     private static async Task WriteResponse(HttpContext context, HttpStatusCode statusCode,

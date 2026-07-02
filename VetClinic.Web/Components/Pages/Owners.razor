@@ -1,60 +1,122 @@
 @page "/owners"
 @inject VetClinic.Web.Services.ApiClient Api
+@inject VetClinic.Web.Services.AuthStateService AuthState
 @rendermode InteractiveServer
 @using VetClinic.Web.Models
-@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
 
-<h3>🧑 Propietarios y Mascotas</h3>
+<div class="page-header">
+    <i class="bi bi-people-fill"></i>
+    <h3>Propietarios y Mascotas</h3>
+</div>
 
-<div class="row">
+<div class="row g-3">
     <div class="col-md-5">
-        <h5>Registrar Propietario</h5>
-        <EditForm Model="ownerModel" OnValidSubmit="RegisterOwner">
-            <InputText class="form-control mb-2" placeholder="Nombre completo" @bind-Value="ownerModel.FullName" />
-            <InputText class="form-control mb-2" placeholder="DNI (8 dígitos)" @bind-Value="ownerModel.Dni" maxlength="8" />
-            <InputText class="form-control mb-2" placeholder="Teléfono (9 dígitos)" @bind-Value="ownerModel.Phone" maxlength="9" />
-            <InputText class="form-control mb-2" placeholder="Email" @bind-Value="ownerModel.Email" />
-            <InputText class="form-control mb-2" placeholder="Dirección" @bind-Value="ownerModel.Address" />
-            <button class="btn btn-primary w-100">Registrar</button>
-        </EditForm>
+        <div class="card card-accent-primary">
+            <div class="section-title"><i class="bi bi-person-plus"></i> Registrar Propietario</div>
+            <EditForm Model="ownerModel" OnValidSubmit="RegisterOwner">
+                <DataAnnotationsValidator />
 
-        @if (ownerMsg != null) { <div class="alert @(ownerOk ? "alert-success" : "alert-danger") mt-2">@ownerMsg</div> }
+                <label class="form-label small">Nombre completo</label>
+                <InputText class="form-control mb-2" placeholder="Nombre completo" @bind-Value="ownerModel.FullName" />
 
-        <hr />
+                <label class="form-label small">DNI</label>
+                <InputText class="form-control mb-2" placeholder="DNI" @bind-Value="ownerModel.Dni" />
 
-        <h5>Registrar Mascota</h5>
-        <EditForm Model="petModel" OnValidSubmit="RegisterPet">
-            <select class="form-select mb-2" @bind="petModel.OwnerId">
-                <option value="0">-- Selecciona propietario --</option>
-                @foreach (var o in owners)
-                {
-                    <option value="@o.Id">@o.FullName (@o.Dni)</option>
-                }
-            </select>
-            <InputText class="form-control mb-2" placeholder="Nombre mascota" @bind-Value="petModel.Name" />
-            <InputText class="form-control mb-2" placeholder="Especie (Canino/Felino)" @bind-Value="petModel.Species" />
-            <InputText class="form-control mb-2" placeholder="Raza" @bind-Value="petModel.Breed" />
-            <button class="btn btn-success w-100">Registrar Mascota</button>
-        </EditForm>
+                <label class="form-label small">Teléfono</label>
+                <InputText class="form-control mb-2" placeholder="Teléfono" @bind-Value="ownerModel.Phone" />
 
-        @if (petMsg != null) { <div class="alert @(petOk ? "alert-success" : "alert-danger") mt-2">@petMsg</div> }
+                <label class="form-label small">Email</label>
+                <InputText class="form-control mb-2" placeholder="Email" @bind-Value="ownerModel.Email" />
+
+                <label class="form-label small">Dirección</label>
+                <InputText class="form-control mb-2" placeholder="Dirección" @bind-Value="ownerModel.Address" />
+
+                <button class="btn btn-primary w-100"><i class="bi bi-check-circle"></i>Registrar</button>
+
+                <ValidationSummary class="text-danger small mt-2" />
+            </EditForm>
+
+            @if (ownerMsg != null) { <div class="alert alert-info mt-3 mb-0">@ownerMsg</div> }
+        </div>
+
+        <div class="card card-accent-success">
+            <div class="section-title"><i class="bi bi-heart-pulse"></i> Registrar Mascota</div>
+            <EditForm Model="petModel" OnValidSubmit="RegisterPet">
+                <DataAnnotationsValidator />
+
+                <label class="form-label small">Propietario</label>
+                <select class="form-select mb-2" @bind="petModel.OwnerId">
+                    <option value="0">-- Selecciona propietario --</option>
+                    @foreach (var o in owners)
+                    {
+                        <option value="@o.Id">@o.FullName (@o.Dni)</option>
+                    }
+                </select>
+
+                <label class="form-label small">Nombre mascota</label>
+                <InputText class="form-control mb-2" placeholder="Nombre mascota" @bind-Value="petModel.Name" />
+
+                <label class="form-label small">Especie</label>
+                <select class="form-select mb-2" @bind="petModel.Species" @bind:after="OnSpeciesChanged">
+                    <option value="">-- Especie --</option>
+                    <option value="Canino">Canino</option>
+                    <option value="Felino">Felino</option>
+                </select>
+
+                <label class="form-label small">Raza</label>
+                <select class="form-select mb-2" @bind="petModel.Breed">
+                    <option value="">-- Raza --</option>
+                    @foreach (var b in availableBreeds)
+                    {
+                        <option value="@b">@b</option>
+                    }
+                </select>
+
+                <button class="btn btn-success w-100"><i class="bi bi-check-circle"></i>Registrar Mascota</button>
+
+                <ValidationSummary class="text-danger small mt-2" />
+            </EditForm>
+
+            @if (petMsg != null) { <div class="alert alert-info mt-3 mb-0">@petMsg</div> }
+        </div>
     </div>
 
     <div class="col-md-7">
-        <h5>Propietarios registrados</h5>
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Nombre</th><th>DNI</th><th>Mascotas</th></tr></thead>
-            <tbody>
-                @foreach (var o in owners)
-                {
+        <div class="card">
+            <div class="section-title"><i class="bi bi-card-list"></i> Propietarios registrados</div>
+            <table class="table table-sm table-striped align-middle mb-0">
+                <thead>
                     <tr>
-                        <td>@o.FullName</td>
-                        <td>@o.Dni</td>
-                        <td>@string.Join(", ", o.PetNames)</td>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Mascotas</th>
+                        @if (AuthState.Role == "Administrador")
+                        {
+                            <th></th>
+                        }
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var o in owners)
+                    {
+                        <tr>
+                            <td>@o.FullName</td>
+                            <td>@o.Dni</td>
+                            <td>@string.Join(", ", o.PetNames)</td>
+                            @if (AuthState.Role == "Administrador")
+                            {
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteOwner(o.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -64,31 +126,29 @@
     private RegisterPetRequest petModel = new();
     private string? ownerMsg;
     private string? petMsg;
-    private bool ownerOk;
-    private bool petOk;
+    private List<string> availableBreeds = new();
+
+    private static readonly Dictionary<string, List<string>> BreedsBySpecies = new()
+    {
+        ["Canino"] = new() { "Labrador", "Golden Retriever", "Pastor Alemán", "Bulldog Francés", "Chihuahua", "Poodle", "Beagle", "Criollo / Mestizo", "Otro" },
+        ["Felino"] = new() { "Persa", "Siamés", "Maine Coon", "Bengalí", "Angora", "Criollo / Mestizo", "Otro" }
+    };
 
     protected override async Task OnInitializedAsync() => await LoadOwners();
 
     private async Task LoadOwners() => owners = await Api.GetOwnersAsync();
 
+    private void OnSpeciesChanged()
+    {
+        petModel.Breed = "";
+        availableBreeds = BreedsBySpecies.TryGetValue(petModel.Species, out var breeds)
+            ? breeds
+            : new List<string>();
+    }
+
     private async Task RegisterOwner()
     {
-        if (string.IsNullOrWhiteSpace(ownerModel.Dni) || !Regex.IsMatch(ownerModel.Dni, @"^\d{8}$"))
-        {
-            ownerOk = false;
-            ownerMsg = "❌ El DNI debe tener exactamente 8 dígitos numéricos";
-            return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(ownerModel.Phone) && !Regex.IsMatch(ownerModel.Phone, @"^\d{9}$"))
-        {
-            ownerOk = false;
-            ownerMsg = "❌ El teléfono debe tener exactamente 9 dígitos numéricos";
-            return;
-        }
-
         var (success, error) = await Api.RegisterOwnerAsync(ownerModel);
-        ownerOk = success;
         ownerMsg = success ? "✅ Propietario registrado" : $"❌ {error}";
         if (success)
         {
@@ -99,27 +159,22 @@
 
     private async Task RegisterPet()
     {
-        if (petModel.OwnerId == 0)
-        {
-            petOk = false;
-            petMsg = "❌ Selecciona un propietario";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(petModel.Name))
-        {
-            petOk = false;
-            petMsg = "❌ El nombre de la mascota es obligatorio";
-            return;
-        }
+        if (petModel.OwnerId == 0) { petMsg = "❌ Selecciona un propietario"; return; }
 
         var (success, error) = await Api.RegisterPetAsync(petModel);
-        petOk = success;
         petMsg = success ? "✅ Mascota registrada" : $"❌ {error}";
         if (success)
         {
             petModel = new();
+            availableBreeds = new();
             await LoadOwners();
         }
+    }
+
+    private async Task DeleteOwner(int id)
+    {
+        var (success, error) = await Api.DeleteOwnerAsync(id);
+        ownerMsg = success ? "✅ Propietario eliminado" : $"❌ {error}";
+        if (success) await LoadOwners();
     }
 }

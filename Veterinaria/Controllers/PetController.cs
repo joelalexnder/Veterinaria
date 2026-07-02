@@ -33,6 +33,11 @@ public class PetController : ControllerBase
     public async Task<IActionResult> GetBySpecies([FromRoute] string species)
         => Ok(await _mediator.Send(new GetPetsBySpeciesQuery { Species = species }));
 
+    [HttpGet("search")]
+    [Authorize(Roles = "Administrador,Veterinario,Recepcionista")]
+    public async Task<IActionResult> Search([FromQuery] string? name, [FromQuery] string? species, [FromQuery] int? ownerId)
+        => Ok(await _mediator.Send(new SearchPetsQuery { Name = name, Species = species, OwnerId = ownerId }));
+
     [HttpGet("{petId}")]
     [Authorize(Roles = "Administrador,Veterinario,Recepcionista")]
     public async Task<IActionResult> GetDetail([FromRoute] int petId)

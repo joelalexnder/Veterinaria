@@ -36,4 +36,11 @@ public class OwnerController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetAll()
         => Ok(await _mediator.Send(new GetAllOwnersQuery()));
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Delete([FromRoute] int id)
+    {
+        await _mediator.Send(new DeleteOwnerCommand { Id = id });
+        return NoContent();
+    }
 }
