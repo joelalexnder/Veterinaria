@@ -152,6 +152,20 @@ public class ApiClient
         return (false, error);
     }
 
+    // ── Pet search ─────────────────────────────
+    public async Task<List<PetDto>> SearchPetsAsync(string? name = null, string? species = null, int? ownerId = null)
+    {
+        ApplyAuthHeader();
+
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(name)) query.Add($"name={Uri.EscapeDataString(name)}");
+        if (!string.IsNullOrWhiteSpace(species)) query.Add($"species={Uri.EscapeDataString(species)}");
+        if (ownerId.HasValue) query.Add($"ownerId={ownerId}");
+
+        var url = "api/Pet/search" + (query.Count > 0 ? "?" + string.Join("&", query) : "");
+        return await _http.GetFromJsonAsync<List<PetDto>>(url) ?? new();
+    }
+
     // ── ServiceArea / Specialist ──────────────
     public async Task<List<ServiceAreaDto>> GetServiceAreasAsync()
     {

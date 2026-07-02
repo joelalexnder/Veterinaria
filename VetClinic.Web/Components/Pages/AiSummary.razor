@@ -1,24 +1,7 @@
-@inject VetClinic.Web.Services.AuthStateService AuthState
-@inject NavigationManager Nav
-
-@code {
-    protected override void OnInitialized()
-    {
-        if (!AuthState.IsAuthenticated)
-        {
-            Nav.NavigateTo("/login");
-            return;
-        }
-
-        if (AuthState.Role is not ("Administrador" or "Veterinario"))
-        {
-            Nav.NavigateTo("/owners");
-        }
-    }
-}
-
 @page "/ai-summary"
 @inject VetClinic.Web.Services.ApiClient Api
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
 @rendermode InteractiveServer
 
 <div class="page-header">
@@ -30,10 +13,52 @@
     <div class="col-md-4">
         <div class="card card-accent-primary">
             <div class="section-title"><i class="bi bi-search-heart"></i> Buscar mascota</div>
-            <label class="form-label small">Id de la mascota</label>
+
+            <label class="form-label small">Buscar por nombre</label>
+            <input type="text" class="form-control mb-2"
+                   placeholder="Ej: Max, Luna..."
+                   value="@searchTerm"
+                   @oninput="OnSearchInput" />
+
+            @if (searching)
+            {
+                <div class="text-muted small mb-2">Buscando...</div>
+            }
+
+            @if (searchResults.Count > 0)
+            {
+                <ul class="list-group mb-3">
+                    @foreach (var p in searchResults)
+                    {
+                        <li class="list-group-item list-group-item-action @(petId == p.Id ? "active" : "")"
+                            style="cursor:pointer"
+                            @onclick="() => SelectPet(p)">
+                            <strong>@p.Name</strong> — @p.Species
+                            <br />
+                            <small class="text-muted">Dueño: @p.OwnerName · Id: @p.Id</small>
+                        </li>
+                    }
+                </ul>
+            }
+            else if (!string.IsNullOrWhiteSpace(searchTerm) && !searching)
+            {
+                <div class="text-muted small mb-3">Sin resultados para "@searchTerm"</div>
+            }
+
+            <hr />
+
+            <label class="form-label small">O ingresa el Id directamente</label>
             <input type="number" class="form-control mb-3" @bind="petId" />
-            <button class="btn btn-primary w-100" @onclick="GetSummary" disabled="@loading">
-                <i class="bi bi-stars"></i>@(loading ? "Generando..." : "Generar resumen")
+
+            @if (selectedPetName != null)
+            {
+                <div class="alert alert-secondary py-2 mb-3">
+                    Mascota seleccionada: <strong>@selectedPetName</strong> (Id: @petId)
+                </div>
+            }
+
+            <button class="btn btn-primary w-100" @onclick="GetSummary" disabled="@(loading || petId == 0)">
+                <i class="bi bi-stars"></i> @(loading ? "Generando..." : "Generar resumen")
             </button>
         </div>
     </div>
@@ -57,10 +82,67 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        if (AuthState.Role is not ("Administrador" or "Veterinario"))
+        {
+            Nav.NavigateTo("/owners");
+        }
+    }
+
     private int petId;
+    private string? selectedPetName;
+    private string searchTerm = "";
+    private List<PetDto> searchResults = new();
+    private bool searching;
     private string? summary;
     private string? error;
     private bool loading;
+
+    private CancellationTokenSource? _debounceCts;
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        selectedPetName = null;
+
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(400, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchResults = new();
+            return;
+        }
+
+        searching = true;
+        searchResults = await Api.SearchPetsAsync(name: searchTerm);
+        searching = false;
+    }
+
+    private void SelectPet(PetDto pet)
+    {
+        petId = pet.Id;
+        selectedPetName = pet.Name;
+        searchResults = new();
+        searchTerm = pet.Name;
+    }
 
     private async Task GetSummary()
     {
