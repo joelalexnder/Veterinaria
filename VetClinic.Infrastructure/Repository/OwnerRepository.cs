@@ -16,4 +16,9 @@ public class OwnerRepository : Repository<Owner>, IOwnerRepository
         await _context.Owners
             .Include(o => o.Pets)
             .FirstOrDefaultAsync(o => o.Id == ownerId);
+
+    public async Task<IEnumerable<Owner>> GetAllWithPetsAsync() =>
+        await _context.Owners
+            .Include(o => o.Pets)
+            .ToListAsync();
 }

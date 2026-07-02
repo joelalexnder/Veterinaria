@@ -11,6 +11,8 @@ using VetClinic.Domain.DTOs.Auth;
 using VetClinic.Domain.DTOs.Grooming;
 using VetClinic.Domain.DTOs.MedicalRecord;
 using VetClinic.Domain.DTOs.Pet;
+using VetClinic.Domain.DTOs.ServiceArea;
+using VetClinic.Domain.DTOs.Specialist;
 using VetClinic.Domain.DTOs.VaccinationRecord;
 using VetClinic.Domain.DTOs.Vaccine;
 using VetClinic.Domain.Entities;
@@ -106,5 +108,15 @@ public class MappingProfile : Profile
         CreateMap<AuditLog, AuditLogDto>()
             .ForMember(dest => dest.UserName,
                 opt => opt.MapFrom(src => src.User != null ? src.User.FullName : string.Empty));
+        
+        // ─── ServiceArea ───────────────────────────────────
+        CreateMap<ServiceArea, ServiceAreaDto>();
+
+// ─── Specialist ────────────────────────────────────
+        CreateMap<Specialist, SpecialistDto>()
+            .ForMember(dest => dest.FullName,
+                opt => opt.MapFrom(src => src.User != null ? src.User.FullName : string.Empty))
+            .ForMember(dest => dest.ServiceAreaName,
+                opt => opt.MapFrom(src => src.ServiceArea != null ? src.ServiceArea.Name : string.Empty));
     }
 }

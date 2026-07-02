@@ -2,6 +2,7 @@ using MediatR;
 using VetClinic.Application.UseCases.Specialist.Commands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VetClinic.Application.UseCases.Specialist.Queries;
 
 namespace Veterinaria.Controllers;
 
@@ -21,4 +22,9 @@ public class SpecialistController : ControllerBase
         await _mediator.Send(request);
         return Ok("Especialista registrado");
     }
+    // En SpecialistController.cs
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetAll([FromQuery] int? serviceAreaId)
+        => Ok(await _mediator.Send(new GetAllSpecialistsQuery { ServiceAreaId = serviceAreaId }));
 }

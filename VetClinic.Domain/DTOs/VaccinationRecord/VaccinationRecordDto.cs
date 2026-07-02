@@ -10,4 +10,5 @@ public class VaccinationRecordDto
     public DateOnly? ApplicationDate { get; set; }
     public DateOnly? NextBoosterDate { get; set; }
     public int DaysOverdue { get; set; }
+    public string Status { get; set; } = null!;
 }

@@ -1,0 +1,178 @@
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        if (AuthState.Role is not ("Administrador" or "Veterinario"))
+        {
+            Nav.NavigateTo("/owners");
+        }
+    }
+}
+
+@page "/vaccination"
+@inject VetClinic.Web.Services.ApiClient Api
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+@using VetClinic.Web.Models
+
+<h3>💉 Vacunación</h3>
+
+<div class="row">
+    <div class="col-md-5">
+        <h5>Agregar vacuna al catálogo</h5>
+        <EditForm Model="vaccineModel" OnValidSubmit="AddVaccine">
+            <InputText class="form-control mb-2" placeholder="Nombre" @bind-Value="vaccineModel.Name" />
+            <InputText class="form-control mb-2" placeholder="Especie" @bind-Value="vaccineModel.Species" />
+            <label class="form-label small">Edad mínima (días)</label>
+            <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.MinAgeDays" />
+            <label class="form-label small">Intervalo de refuerzo (días)</label>
+            <InputNumber class="form-control mb-2" @bind-Value="vaccineModel.BoosterIntervalDays" />
+            
+            <button class="btn btn-primary w-100">Agregar</button>
+        </EditForm>
+        @if (vaccineMsg != null) { <div class="alert alert-info mt-2">@vaccineMsg</div> }
+
+        <hr />
+
+        <h5>Aplicar vacuna</h5>
+        <EditForm Model="recordModel" OnValidSubmit="RegisterVaccination">
+            <InputNumber class="form-control mb-2" placeholder="Id Mascota" @bind-Value="recordModel.PetId" />
+
+            <select class="form-select mb-2" @bind="recordModel.VaccineId">
+                <option value="0">-- Vacuna --</option>
+                @foreach (var v in catalog)
+                {
+                    <option value="@v.Id">@v.Name (@v.Species)</option>
+                }
+            </select>
+
+            <InputNumber class="form-control mb-2" placeholder="Id Veterinario" @bind-Value="recordModel.VeterinarianId" />
+            <InputText class="form-control mb-2" placeholder="Lote" @bind-Value="recordModel.BatchNumber" />
+            <label class="form-label small">Fecha de aplicación</label>
+            <input type="date" class="form-control mb-2" value="@applicationDateStr" @onchange="@(e => applicationDateStr = e.Value?.ToString() ?? applicationDateStr)" />
+            <label class="form-label small">Próximo refuerzo</label>
+            <input type="date" class="form-control mb-2" value="@boosterDateStr" @onchange="@(e => boosterDateStr = e.Value?.ToString() ?? boosterDateStr)" />
+            
+            
+            <button class="btn btn-success w-100">Aplicar vacuna</button>
+        </EditForm>
+        @if (recordMsg != null) { <div class="alert alert-info mt-2">@recordMsg</div> }
+    </div>
+
+    <div class="col-md-7">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Vacunaciones</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-secondary" @onclick="LoadOverdue">🔄 Actualizar</button>
+                <button class="btn btn-sm btn-outline-success ms-2" @onclick="DownloadReport" disabled="@downloading">
+                    @(downloading ? "Generando..." : "📊 Descargar reporte Excel")
+                </button>
+            </div>
+        </div>
+        @if (downloadError != null) { <div class="alert alert-danger py-2">@downloadError</div> }
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Mascota</th>
+                    <th>Vacuna</th>
+                    <th>Próximo refuerzo</th>
+                    <th>Días vencida</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in overdue)
+                {
+                    <tr class="@(r.Status switch
+                                 {
+                                     "Vencida" => "table-danger",
+                                     "Próxima" => "table-warning",
+                                     "Al día" => "table-success",
+                                     _ => "table-secondary"
+                                 })">
+                        <td>@r.PetName</td>
+                        <td>@r.VaccineName</td>
+                        <td>@r.NextBoosterDate</td>
+                        <td>@r.DaysOverdue</td>
+                        <td>@r.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private AddVaccineCatalogRequest vaccineModel = new();
+    private RegisterVaccinationRequest recordModel = new();
+    private List<VaccineDto> catalog = new();
+    private List<VaccinationRecordDto> overdue = new();
+    private string applicationDateStr = DateTime.Today.ToString("yyyy-MM-dd");
+    private string boosterDateStr = DateTime.Today.AddYears(1).ToString("yyyy-MM-dd");
+    private string? vaccineMsg;
+    private string? recordMsg;
+    private bool downloading;
+    private string? downloadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        catalog = await Api.GetVaccineCatalogAsync();
+        await LoadOverdue();
+    }
+
+    private async Task LoadOverdue() => overdue = await Api.GetAllVaccinationsAsync();
+
+    private async Task AddVaccine()
+    {
+        var success = await Api.AddVaccineCatalogAsync(vaccineModel);
+        vaccineMsg = success ? "✅ Vacuna agregada" : "❌ Error al agregar";
+        if (success)
+        {
+            vaccineModel = new();
+            catalog = await Api.GetVaccineCatalogAsync();
+        }
+    }
+
+    private async Task RegisterVaccination()
+    {
+        recordModel.ApplicationDate = DateOnly.Parse(applicationDateStr);
+        recordModel.NextBoosterDate = DateOnly.Parse(boosterDateStr);
+
+        var (success, error) = await Api.RegisterVaccinationAsync(recordModel);
+        recordMsg = success ? "✅ Vacunación registrada" : $"❌ {error}";
+        if (success)
+        {
+            recordModel = new();
+            await LoadOverdue();
+        }
+    }
+
+    private async Task DownloadReport()
+    {
+        downloading = true;
+        downloadError = null;
+
+        var bytes = await Api.GetVaccinationsReportAsync();
+
+        if (bytes is null)
+        {
+            downloadError = "❌ No se pudo generar el reporte";
+        }
+        else
+        {
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"Vacunaciones_{DateTime.Now:yyyyMMdd}.xlsx";
+            await JS.InvokeVoidAsync("downloadFileFromBytes", fileName, base64);
+        }
+
+        downloading = false;
+    }
+}

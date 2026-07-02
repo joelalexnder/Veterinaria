@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Components\Pages\Appointments.razor.cs" />
+    <Compile Remove="Components\Pages\Login.razor.cs" />
+    <Compile Remove="Components\Pages\Vaccination.razor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Components\Pages\Weather.razor" />
+    <Content Remove="Components\Pages\NotFound.razor" />
+    <Content Remove="Components\Pages\Error.razor" />
+    <Content Remove="Components\Pages\Counter.razor" />
+  </ItemGroup>
+
+</Project>

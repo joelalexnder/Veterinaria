@@ -5,7 +5,7 @@ using VetClinic.Domain.Ports.Services;
 
 namespace VetClinic.Application.UseCases.Auth.Commands;
 
-public class RegisterUserCommand : IRequest<Unit>
+public class RegisterUserCommand : IRequest<int>
 {
     public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
@@ -13,7 +13,7 @@ public class RegisterUserCommand : IRequest<Unit>
     public int RoleId { get; set; }
 }
 
-public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, Unit>
+public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, int>
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
@@ -26,7 +26,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, U
         _authService = authService;
     }
 
-    public async Task<Unit> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<int> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var existing = await _uow.Users.GetByEmailAsync(request.Email);
         if (existing is not null) throw new Exception("El email ya está registrado");
@@ -39,6 +39,6 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, U
         await _uow.Users.AddAsync(user);
         await _uow.SaveChangesAsync();
 
-        return Unit.Value;
+        return user.Id;
     }
 }

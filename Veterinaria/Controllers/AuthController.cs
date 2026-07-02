@@ -35,10 +35,9 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Register([FromBody] RegisterUserCommand request)
     {
-        await _mediator.Send(request);
-        return Ok("Usuario registrado");
+        var id = await _mediator.Send(request);
+        return Ok(new { id, message = "Usuario registrado" });
     }
-
     [HttpPut("update-role")]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> AssignRole([FromBody] AssignRoleCommand request)

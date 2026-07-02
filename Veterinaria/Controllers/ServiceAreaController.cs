@@ -2,6 +2,7 @@ using MediatR;
 using VetClinic.Application.UseCases.ServiceArea.Commands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VetClinic.Application.UseCases.ServiceArea.Queries;
 
 namespace Veterinaria.Controllers;
 
@@ -21,4 +22,8 @@ public class ServiceAreaController : ControllerBase
         await _mediator.Send(request);
         return Ok("Área de servicio registrada");
     }
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetAll()
+        => Ok(await _mediator.Send(new GetAllServiceAreasQuery()));
 }

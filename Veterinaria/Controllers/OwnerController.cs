@@ -2,6 +2,7 @@
 using VetClinic.Application.UseCases.Owner.Commands;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VetClinic.Application.UseCases.Owner.Queries;
 
 namespace Veterinaria.Controllers;
 
@@ -30,4 +31,9 @@ public class OwnerController : ControllerBase
         await _mediator.Send(request);
         return NoContent();
     }
+    // En OwnerController.cs
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetAll()
+        => Ok(await _mediator.Send(new GetAllOwnersQuery()));
 }

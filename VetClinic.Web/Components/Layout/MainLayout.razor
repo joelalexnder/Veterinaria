@@ -1,0 +1,47 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+            @if (AuthState.IsAuthenticated)
+            {
+                <span>👤 @AuthState.FullName (@AuthState.Role)</span>
+                <button class="btn btn-sm btn-outline-danger" @onclick="Logout">Cerrar sesión</button>
+            }
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthState.OnChange += HandleAuthChanged;
+    }
+
+    private void HandleAuthChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Logout()
+    {
+        AuthState.ClearSession();
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= HandleAuthChanged;
+    }
+}

@@ -1,0 +1,124 @@
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        if (AuthState.Role is not "Administrador")
+        {
+            Nav.NavigateTo("/owners");
+        }
+    }
+}
+
+@page "/users"
+@inject VetClinic.Web.Services.ApiClient Api
+@rendermode InteractiveServer
+@using VetClinic.Web.Models
+
+<h3>👥 Gestión de Usuarios</h3>
+
+<div class="row">
+    <div class="col-md-5">
+        <h5>Crear nuevo usuario</h5>
+        <EditForm Model="model" OnValidSubmit="Register">
+            <label class="form-label small">Nombre completo</label>
+            <InputText class="form-control mb-2" @bind-Value="model.FullName" />
+
+            <label class="form-label small">Email</label>
+            <InputText class="form-control mb-2" @bind-Value="model.Email" />
+
+            <label class="form-label small">Contraseña</label>
+            <InputText type="password" class="form-control mb-2" @bind-Value="model.Password" />
+
+            <label class="form-label small">Rol</label>
+            <select class="form-select mb-2" @bind="model.RoleId">
+                <option value="0">-- Selecciona rol --</option>
+                <option value="1">Administrador</option>
+                <option value="2">Veterinario</option>
+                <option value="3">Recepcionista</option>
+                <option value="4">Estilista</option>
+            </select>
+
+            @if (model.RoleId == 2)
+            {
+                <div class="alert alert-secondary py-2">
+                    Este rol requiere datos de especialista para aparecer en el agendamiento de citas.
+                </div>
+
+                <label class="form-label small">Área de servicio</label>
+                <select class="form-select mb-2" @bind="specialistData.ServiceAreaId">
+                    <option value="0">-- Selecciona área --</option>
+                    @foreach (var a in areas)
+                    {
+                        <option value="@a.Id">@a.Name</option>
+                    }
+                </select>
+
+                <label class="form-label small">Especialidad</label>
+                <InputText class="form-control mb-2" placeholder="Ej: Cirugía General, Medicina General" @bind-Value="specialistData.SpecialtyName" />
+            }
+
+            <button class="btn btn-primary w-100">Crear usuario</button>
+        </EditForm>
+        @if (msg != null) { <div class="alert alert-info mt-2">@msg</div> }
+    </div>
+</div>
+
+@code {
+    private RegisterUserRequest model = new();
+    private RegisterSpecialistRequest specialistData = new();
+    private List<ServiceAreaDto> areas = new();
+    private string? msg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        areas = await Api.GetServiceAreasAsync();
+    }
+
+    private async Task Register()
+    {
+        if (model.RoleId == 0)
+        {
+            msg = "❌ Selecciona un rol";
+            return;
+        }
+
+        if (model.RoleId == 2 && (specialistData.ServiceAreaId == 0 || string.IsNullOrWhiteSpace(specialistData.SpecialtyName)))
+        {
+            msg = "❌ Completa el área de servicio y especialidad para el Veterinario";
+            return;
+        }
+
+        var (success, newUserId, error) = await Api.RegisterUserAsync(model);
+
+        if (!success)
+        {
+            msg = $"❌ {error}";
+            return;
+        }
+
+        if (model.RoleId == 2)
+        {
+            specialistData.UserId = newUserId;
+            var specialistOk = await Api.RegisterSpecialistAsync(specialistData);
+
+            msg = specialistOk
+                ? "✅ Usuario y especialista creados correctamente"
+                : "⚠️ Usuario creado, pero falló el registro como especialista. Contacta soporte.";
+        }
+        else
+        {
+            msg = "✅ Usuario creado correctamente";
+        }
+
+        model = new();
+        specialistData = new();
+    }
+}

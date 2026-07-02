@@ -13,9 +13,16 @@ public class SpecialistRepository : Repository<Specialist>, ISpecialistRepositor
         await _context.Specialists
             .Where(s => s.ServiceAreaId == serviceAreaId)
             .Include(s => s.User)
+            .Include(s => s.ServiceArea)
             .ToListAsync();
 
     public async Task<Specialist?> GetByUserIdAsync(int userId) =>
         await _context.Specialists
             .FirstOrDefaultAsync(s => s.UserId == userId);
+
+    public async Task<IEnumerable<Specialist>> GetAllWithDetailsAsync() =>
+        await _context.Specialists
+            .Include(s => s.User)
+            .Include(s => s.ServiceArea)
+            .ToListAsync();
 }

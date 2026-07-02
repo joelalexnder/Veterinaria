@@ -1,0 +1,71 @@
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsAuthenticated)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        if (AuthState.Role is not ("Administrador" or "Veterinario"))
+        {
+            Nav.NavigateTo("/owners");
+        }
+    }
+}
+
+@page "/ai-summary"
+@inject VetClinic.Web.Services.ApiClient Api
+@rendermode InteractiveServer
+
+<h3>🤖 Resumen de Salud con IA</h3>
+
+<div class="row">
+    <div class="col-md-4">
+        <label>Id de la mascota</label>
+        <input type="number" class="form-control mb-2" @bind="petId" />
+        <button class="btn btn-primary" @onclick="GetSummary" disabled="@loading">
+            @(loading ? "Generando..." : "Generar resumen")
+        </button>
+    </div>
+
+    <div class="col-md-8">
+        @if (summary != null)
+        {
+            <div class="card p-3">
+                <h6>Resumen generado:</h6>
+                <p style="white-space: pre-line">@summary</p>
+            </div>
+        }
+        @if (error != null)
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+    </div>
+</div>
+
+@code {
+    private int petId;
+    private string? summary;
+    private string? error;
+    private bool loading;
+
+    private async Task GetSummary()
+    {
+        loading = true;
+        error = null;
+        summary = null;
+
+        var result = await Api.GetPetHealthSummaryAsync(petId);
+
+        if (result is null)
+            error = "No se pudo generar el resumen. Verifica el Id de la mascota.";
+        else
+            summary = result;
+
+        loading = false;
+    }
+}

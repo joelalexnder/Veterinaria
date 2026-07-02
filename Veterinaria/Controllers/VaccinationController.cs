@@ -63,4 +63,9 @@ public class VaccinationController : ControllerBase
     [Authorize(Roles = "Administrador,Veterinario")]
     public async Task<IActionResult> GetCatalog()
         => Ok(await _mediator.Send(new GetVaccineCatalogQuery()));
+    
+    [HttpGet("all")]
+    [Authorize(Roles = "Administrador,Veterinario")]
+    public async Task<IActionResult> GetAll()
+        => Ok(await _mediator.Send(new GetAllVaccinationsWithStatusQuery()));
 }

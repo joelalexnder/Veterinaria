@@ -1,0 +1,11 @@
+@page "/"
+@inject VetClinic.Web.Services.AuthStateService AuthState
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo(AuthState.IsAuthenticated ? "/owners" : "/login");
+    }
+}

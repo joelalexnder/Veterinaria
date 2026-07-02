@@ -1,0 +1,94 @@
+@page "/owners"
+@inject VetClinic.Web.Services.ApiClient Api
+@rendermode InteractiveServer
+@using VetClinic.Web.Models
+
+<h3>🧑 Propietarios y Mascotas</h3>
+
+<div class="row">
+    <div class="col-md-5">
+        <h5>Registrar Propietario</h5>
+        <EditForm Model="ownerModel" OnValidSubmit="RegisterOwner">
+            <InputText class="form-control mb-2" placeholder="Nombre completo" @bind-Value="ownerModel.FullName" />
+            <InputText class="form-control mb-2" placeholder="DNI" @bind-Value="ownerModel.Dni" />
+            <InputText class="form-control mb-2" placeholder="Teléfono" @bind-Value="ownerModel.Phone" />
+            <InputText class="form-control mb-2" placeholder="Email" @bind-Value="ownerModel.Email" />
+            <InputText class="form-control mb-2" placeholder="Dirección" @bind-Value="ownerModel.Address" />
+            <button class="btn btn-primary w-100">Registrar</button>
+        </EditForm>
+
+        @if (ownerMsg != null) { <div class="alert alert-info mt-2">@ownerMsg</div> }
+
+        <hr />
+
+        <h5>Registrar Mascota</h5>
+        <EditForm Model="petModel" OnValidSubmit="RegisterPet">
+            <select class="form-select mb-2" @bind="petModel.OwnerId">
+                <option value="0">-- Selecciona propietario --</option>
+                @foreach (var o in owners)
+                {
+                    <option value="@o.Id">@o.FullName (@o.Dni)</option>
+                }
+            </select>
+            <InputText class="form-control mb-2" placeholder="Nombre mascota" @bind-Value="petModel.Name" />
+            <InputText class="form-control mb-2" placeholder="Especie (Canino/Felino)" @bind-Value="petModel.Species" />
+            <InputText class="form-control mb-2" placeholder="Raza" @bind-Value="petModel.Breed" />
+            <button class="btn btn-success w-100">Registrar Mascota</button>
+        </EditForm>
+
+        @if (petMsg != null) { <div class="alert alert-info mt-2">@petMsg</div> }
+    </div>
+
+    <div class="col-md-7">
+        <h5>Propietarios registrados</h5>
+        <table class="table table-sm table-striped">
+            <thead><tr><th>Nombre</th><th>DNI</th><th>Mascotas</th></tr></thead>
+            <tbody>
+                @foreach (var o in owners)
+                {
+                    <tr>
+                        <td>@o.FullName</td>
+                        <td>@o.Dni</td>
+                        <td>@string.Join(", ", o.PetNames)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<OwnerDto> owners = new();
+    private RegisterOwnerRequest ownerModel = new();
+    private RegisterPetRequest petModel = new();
+    private string? ownerMsg;
+    private string? petMsg;
+
+    protected override async Task OnInitializedAsync() => await LoadOwners();
+
+    private async Task LoadOwners() => owners = await Api.GetOwnersAsync();
+
+    private async Task RegisterOwner()
+    {
+        var success = await Api.RegisterOwnerAsync(ownerModel);
+        ownerMsg = success ? "✅ Propietario registrado" : "❌ Error al registrar";
+        if (success)
+        {
+            ownerModel = new();
+            await LoadOwners();
+        }
+    }
+
+    private async Task RegisterPet()
+    {
+        if (petModel.OwnerId == 0) { petMsg = "❌ Selecciona un propietario"; return; }
+
+        var success = await Api.RegisterPetAsync(petModel);
+        petMsg = success ? "✅ Mascota registrada" : "❌ Error al registrar";
+        if (success)
+        {
+            petModel = new();
+            await LoadOwners();
+        }
+    }
+}

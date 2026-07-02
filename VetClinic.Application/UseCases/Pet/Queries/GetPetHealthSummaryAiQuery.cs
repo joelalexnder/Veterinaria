@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Text;
+using MediatR;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Domain.Ports.Services;
 
@@ -13,29 +14,37 @@ public class GetPetHealthSummaryAiQueryHandler : IRequestHandler<GetPetHealthSum
 {
     private readonly IUnitOfWork _uow;
     private readonly IAiRecommendationService _aiService;
-    
+
     public GetPetHealthSummaryAiQueryHandler(IUnitOfWork uow, IAiRecommendationService aiService)
     {
         _uow = uow;
         _aiService = aiService;
     }
+
     public async Task<string> Handle(GetPetHealthSummaryAiQuery request, CancellationToken cancellationToken)
     {
-        var pet = await _uow.Pets.GetByIdAsync(request.PetId);
-        
-        if (pet is null) throw new Exception("Mascota no encontrada en el sistema");
-        
-        var petData = $@"
-        Nombre: {pet.Name}, 
-        Especie: {pet.Species}, 
-        Raza: {pet.Breed ?? "No especificada"}, 
-        Peso: {pet.Weight?.ToString() ?? "No registrado"} kg, 
-        Sexo: {pet.Sex ?? "No especificado"},
-        Estado de salud general: {pet.GeneralHealthStatus ?? "Sin observaciones previas"}.";
+        var pet = await _uow.Pets.GetWithMedicalHistoryAsync(request.PetId);
+        if (pet is null) throw new Exception("Mascota no encontrada");
 
-        var aiRecommendation = await _aiService.GenerateHealthSummaryAsync(petData);
+        var sb = new StringBuilder();
+        sb.AppendLine($"Mascota: {pet.Name}, Especie: {pet.Species}, Raza: {pet.Breed}, Sexo: {pet.Sex}");
+        sb.AppendLine($"Peso actual: {pet.Weight}, Estado general: {pet.GeneralHealthStatus}");
+        sb.AppendLine("Historial médico:");
 
-        return aiRecommendation;
+        if (pet.MedicalRecords is not null && pet.MedicalRecords.Any())
+        {
+            foreach (var record in pet.MedicalRecords.OrderByDescending(m => m.ConsultDate))
+            {
+                sb.AppendLine($"- {record.ConsultDate:dd/MM/yyyy} | Motivo: {record.Reason} | " +
+                              $"Diagnóstico: {record.Diagnosis} | Tratamiento: {record.Treatment} | " +
+                              $"Peso registrado: {record.RegisteredWeight}");
+            }
+        }
+        else
+        {
+            sb.AppendLine("Sin registros médicos previos.");
+        }
+
+        return await _aiService.GenerateHealthSummaryAsync(sb.ToString());
     }
 }
-
