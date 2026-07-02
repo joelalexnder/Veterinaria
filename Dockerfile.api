@@ -1,0 +1,19 @@
+﻿FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+WORKDIR /app
+
+COPY Veterinaria.sln ./
+COPY VetClinic.Application/*.csproj ./VetClinic.Application/
+COPY VetClinic.Domain/*.csproj ./VetClinic.Domain/
+COPY VetClinic.Infrastructure/*.csproj ./VetClinic.Infrastructure/
+COPY VetClinic.Web/*.csproj ./VetClinic.Web/
+COPY Veterinaria/*.csproj ./Veterinaria/
+RUN dotnet restore
+
+COPY . ./
+# Publicamos la API
+RUN dotnet publish Veterinaria/Veterinaria.csproj -c Release -o out
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+COPY --from=build-env /app/out .
+ENTRYPOINT ["dotnet", "Veterinaria.dll"]
