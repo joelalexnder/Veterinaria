@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Specialist.Commands;
@@ -19,7 +20,7 @@ public class RegisterSpecialistCommandHandler : IRequestHandler<RegisterSpeciali
     public async Task<Unit> Handle(RegisterSpecialistCommand request, CancellationToken cancellationToken)
     {
         var user = await _uow.Users.GetByIdAsync(request.UserId);
-        if (user is null) throw new Exception("Usuario no encontrado");
+        if (user is null) throw new NotFoundException("Usuario no encontrado");
 
         var specialist = new Domain.Entities.Specialist
         {

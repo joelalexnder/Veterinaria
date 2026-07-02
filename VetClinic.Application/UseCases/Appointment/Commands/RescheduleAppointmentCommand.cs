@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Appointment.Commands;
@@ -21,7 +22,7 @@ public class RescheduleAppointmentCommandHandler : IRequestHandler<RescheduleApp
     public async Task<Unit> Handle(RescheduleAppointmentCommand request, CancellationToken cancellationToken)
     {
         var appointment = await _uow.Appointments.GetByIdAsync(request.Id);
-        if (appointment is null) throw new Exception("Cita no encontrada");
+        if (appointment is null) throw new NotFoundException("Cita no encontrada");
 
         var hasConflict = await _uow.Appointments.HasConflictAsync(
             appointment.SpecialistId,
@@ -30,8 +31,7 @@ public class RescheduleAppointmentCommandHandler : IRequestHandler<RescheduleApp
             request.NewStartTime,
             request.NewEndTime);
 
-        if (hasConflict)
-            throw new Exception("Ya existe una cita en ese nuevo horario");
+        if (hasConflict) throw new ConflictException("Ya existe una cita en ese nuevo horario");
 
         appointment.AppointmentDate = request.NewDate;
         appointment.StartTime = request.NewStartTime;

@@ -16,21 +16,18 @@ public class RequestLoggingMiddleware
     public async Task InvokeAsync(HttpContext context)
     {
         var stopwatch = Stopwatch.StartNew();
-
         var method = context.Request.Method;
         var path = context.Request.Path;
-        var user = context.User?.Identity?.Name ?? "Anónimo";
 
-        _logger.LogInformation(
-            "[VetClinic] {Method} {Path} | Usuario: {User} | Inicio: {Time}",
-            method, path, user, DateTime.UtcNow);
+        _logger.LogInformation("[VetClinic] {Method} {Path} | Inicio: {Time}", method, path, DateTime.UtcNow);
 
         await _next(context);
 
         stopwatch.Stop();
+        var user = context.User?.Identity?.Name ?? "Anónimo"; // ← recalculado DESPUÉS de auth
 
         _logger.LogInformation(
-            "[VetClinic] {Method} {Path} | Status: {StatusCode} | Duración: {Ms}ms",
-            method, path, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
+            "[VetClinic] {Method} {Path} | Usuario: {User} | Status: {StatusCode} | Duración: {Ms}ms",
+            method, path, user, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
     }
 }

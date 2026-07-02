@@ -1,5 +1,6 @@
 using MediatR;
 using AutoMapper;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Appointment.Commands;
@@ -28,14 +29,14 @@ public class ScheduleAppointmentCommandHandler : IRequestHandler<ScheduleAppoint
     public async Task<Unit> Handle(ScheduleAppointmentCommand request, CancellationToken cancellationToken)
     {
         var pet = await _uow.Pets.GetByIdAsync(request.PetId);
-        if (pet is null) throw new Exception("Mascota no encontrada");
+        if (pet is null) throw new NotFoundException("Mascota no encontrada");
 
         var hasConflict = await _uow.Appointments.HasConflictAsync(
             request.SpecialistId, request.ServiceAreaId,
             request.AppointmentDate, request.StartTime, request.EndTime);
 
-        if (hasConflict)
-            throw new Exception("El especialista ya tiene una cita en ese horario");
+        if (hasConflict) throw new ConflictException("El especialista ya tiene una cita en ese horario");
+
 
         var appointment = _mapper.Map<Domain.Entities.Appointment>(request);
         appointment.Status = "Pendiente";

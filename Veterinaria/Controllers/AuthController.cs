@@ -71,4 +71,11 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> GetAuditLog([FromQuery] int? userId, [FromQuery] DateTime? from, [FromQuery] DateTime? to)
         => Ok(await _mediator.Send(new GetAuditLogQuery { UserId = userId, From = from, To = to }));
+    [HttpDelete("users/{id}")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> DeleteUser([FromRoute] int id)
+    {
+        await _mediator.Send(new DeleteUserCommand { Id = id });
+        return NoContent();
+    }
 }

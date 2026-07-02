@@ -74,12 +74,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseHttpsRedirection();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ParameterValidationMiddleware>();
 
-app.UseHttpsRedirection();
+
 app.UseAuthentication(); // <- importante, antes de Authorization
 app.UseAuthorization();
 app.MapControllers();

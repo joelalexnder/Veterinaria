@@ -1,5 +1,6 @@
 using MediatR;
 using AutoMapper;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.MedicalRecord.Commands;
@@ -29,7 +30,7 @@ public class AddMedicalRecordCommandHandler : IRequestHandler<AddMedicalRecordCo
     public async Task<Unit> Handle(AddMedicalRecordCommand request, CancellationToken cancellationToken)
     {
         var pet = await _uow.Pets.GetByIdAsync(request.PetId);
-        if (pet is null) throw new Exception("Mascota no encontrada");
+        if (pet is null) throw new NotFoundException("Mascota no encontrada");
 
         var record = _mapper.Map<Domain.Entities.MedicalRecord>(request);
         record.ConsultDate = DateTime.Now;

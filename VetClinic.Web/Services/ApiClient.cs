@@ -29,7 +29,48 @@ public class ApiClient
         if (!response.IsSuccessStatusCode) return null;
         return await response.Content.ReadFromJsonAsync<AuthResponse>();
     }
-   
+    public async Task<List<UserDto>> GetAllUsersAsync()
+    {
+        ApplyAuthHeader();
+        var all = new List<UserDto>();
+
+        // No hay endpoint "GetAll", así que recorremos los 4 roles existentes
+        for (int roleId = 1; roleId <= 4; roleId++)
+        {
+            var users = await _http.GetFromJsonAsync<List<UserDto>>($"api/Auth/users?roleId={roleId}") ?? new();
+            all.AddRange(users);
+        }
+
+        return all;
+    }
+    public async Task<(bool Success, string Error)> DeleteUserAsync(int userId)
+    {
+        ApplyAuthHeader();
+        var response = await _http.DeleteAsync($"api/Auth/users/{userId}");
+
+        if (response.IsSuccessStatusCode)
+            return (true, "");
+
+        var body = await response.Content.ReadAsStringAsync();
+
+        // Tu middleware devuelve JSON con "details" — lo extraemos
+        try
+        {
+            var json = System.Text.Json.JsonDocument.Parse(body);
+            var details = json.RootElement.TryGetProperty("details", out var d) ? d.GetString() : "Error desconocido";
+            return (false, details ?? "Error desconocido");
+        }
+        catch
+        {
+            return (false, body);
+        }
+    }
+    public async Task<bool> AssignRoleAsync(AssignRoleRequest request)
+    {
+        ApplyAuthHeader();
+        var response = await _http.PutAsJsonAsync("api/Auth/update-role", request);
+        return response.IsSuccessStatusCode;
+    }
     
     public async Task<(bool Success, int Id, string Error)> RegisterUserAsync(RegisterUserRequest request)
     {
@@ -59,11 +100,13 @@ public class ApiClient
         return await _http.GetFromJsonAsync<List<OwnerDto>>("api/Owner") ?? new();
     }
 
-    public async Task<bool> RegisterOwnerAsync(RegisterOwnerRequest request)
+    public async Task<(bool Success, string Error)> RegisterOwnerAsync(RegisterOwnerRequest request)
     {
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Owner", request);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return (true, "");
+        var error = await response.Content.ReadAsStringAsync();
+        return (false, error);
     }
 
     // ── Pet ───────────────────────────────────
@@ -73,11 +116,13 @@ public class ApiClient
         return await _http.GetFromJsonAsync<List<PetDto>>($"api/Pet/owner/{ownerId}") ?? new();
     }
 
-    public async Task<bool> RegisterPetAsync(RegisterPetRequest request)
+    public async Task<(bool Success, string Error)> RegisterPetAsync(RegisterPetRequest request)
     {
         ApplyAuthHeader();
         var response = await _http.PostAsJsonAsync("api/Pet", request);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return (true, "");
+        var error = await response.Content.ReadAsStringAsync();
+        return (false, error);
     }
 
     // ── ServiceArea / Specialist ──────────────

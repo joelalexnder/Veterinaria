@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Vaccination.Commands;
@@ -18,7 +19,7 @@ public class UpdateVaccineScheduleCommandHandler : IRequestHandler<UpdateVaccine
     public async Task<Unit> Handle(UpdateVaccineScheduleCommand request, CancellationToken cancellationToken)
     {
         var record = await _uow.VaccinationRecords.GetByIdAsync(request.Id);
-        if (record is null) throw new Exception("Registro de vacunación no encontrado");
+        if (record is null) throw new NotFoundException("Registro de vacunación no encontrado");
 
         record.NextBoosterDate = request.NextBoosterDate;
 

@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Domain.Ports.Services;
 
@@ -25,7 +26,7 @@ public class ChangePasswordCommandHandler : IRequestHandler<ChangePasswordComman
     public async Task<Unit> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
     {
         var user = await _uow.Users.GetByIdAsync(request.UserId);
-        if (user is null) throw new Exception("Usuario no encontrado");
+        if (user is null) throw new NotFoundException("Usuario no encontrado");
 
         if (!_authService.Verify(request.CurrentPassword, user.PasswordHash))
             throw new UnauthorizedAccessException("Contraseña actual incorrecta");

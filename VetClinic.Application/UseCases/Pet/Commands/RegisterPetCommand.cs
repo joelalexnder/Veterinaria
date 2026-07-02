@@ -1,5 +1,6 @@
 using MediatR;
 using AutoMapper;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Pet.Commands;
@@ -31,7 +32,7 @@ public class RegisterPetCommandHandler : IRequestHandler<RegisterPetCommand, Uni
     public async Task<Unit> Handle(RegisterPetCommand request, CancellationToken cancellationToken)
     {
         var owner = await _uow.Owners.GetByIdAsync(request.OwnerId);
-        if (owner is null) throw new Exception("Propietario no encontrado");
+        if (owner is null) throw new NotFoundException("Propietario no encontrado");
 
         var pet = _mapper.Map<Domain.Entities.Pet>(request);
         pet.CreatedAt = DateTime.Now;

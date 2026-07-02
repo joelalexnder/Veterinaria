@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Grooming.Commands;
@@ -17,7 +18,7 @@ public class StartGroomingCommandHandler : IRequestHandler<StartGroomingCommand,
     public async Task<Unit> Handle(StartGroomingCommand request, CancellationToken cancellationToken)
     {
         var grooming = await _uow.GroomingAppointments.GetByIdAsync(request.Id);
-        if (grooming is null) throw new Exception("Servicio de grooming no encontrado");
+        if (grooming is null) throw new NotFoundException("Servicio de grooming no encontrado");
 
         grooming.ServiceStatus = "En Proceso";
 

@@ -1,6 +1,7 @@
 using MediatR;
 using AutoMapper;
 using VetClinic.Domain.Entities;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Grooming.Commands;
@@ -26,7 +27,7 @@ public class ScheduleGroomingCommandHandler : IRequestHandler<ScheduleGroomingCo
     public async Task<Unit> Handle(ScheduleGroomingCommand request, CancellationToken cancellationToken)
     {
         var appointment = await _uow.Appointments.GetByIdAsync(request.AppointmentId);
-        if (appointment is null) throw new Exception("Cita no encontrada");
+        if (appointment is null) throw new NotFoundException("Cita no encontrada");
 
         var grooming = _mapper.Map<GroomingAppointment>(request);
         grooming.ServiceStatus = "Pendiente";

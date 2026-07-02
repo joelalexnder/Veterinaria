@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Appointment.Commands;
@@ -18,7 +19,7 @@ public class UpdateAppointmentStatusCommandHandler : IRequestHandler<UpdateAppoi
     public async Task<Unit> Handle(UpdateAppointmentStatusCommand request, CancellationToken cancellationToken)
     {
         var appointment = await _uow.Appointments.GetByIdAsync(request.Id);
-        if (appointment is null) throw new Exception("Cita no encontrada");
+        if (appointment is null) throw new NotFoundException("Cita no encontrada");
 
         appointment.Status = request.Status;
 

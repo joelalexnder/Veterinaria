@@ -1,5 +1,6 @@
 using MediatR;
 using AutoMapper;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace VetClinic.Application.UseCases.Vaccination.Commands;
@@ -28,10 +29,10 @@ public class RegisterVaccinationCommandHandler : IRequestHandler<RegisterVaccina
     public async Task<Unit> Handle(RegisterVaccinationCommand request, CancellationToken cancellationToken)
     {
         var pet = await _uow.Pets.GetByIdAsync(request.PetId);
-        if (pet is null) throw new Exception("Mascota no encontrada");
+        if (pet is null) throw new NotFoundException("Mascota no encontrada");
 
         var vaccine = await _uow.Vaccines.GetByIdAsync(request.VaccineId);
-        if (vaccine is null) throw new Exception("Vacuna no encontrada en el catálogo");
+        if (vaccine is null) throw new NotFoundException("Vacuna no encontrada en el catálogo");
 
         var record = _mapper.Map<Domain.Entities.VaccinationRecord>(request);
 

@@ -1,5 +1,6 @@
 using MediatR;
 using AutoMapper;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 using VetClinic.Domain.Ports.Services;
 
@@ -29,7 +30,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand, i
     public async Task<int> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         var existing = await _uow.Users.GetByEmailAsync(request.Email);
-        if (existing is not null) throw new Exception("El email ya está registrado");
+        if (existing is not null) throw new ConflictException("El email ya está registrado");
 
         var user = _mapper.Map<Domain.Entities.User>(request);
         user.PasswordHash = _authService.Hash(request.Password);

@@ -2,6 +2,7 @@
 @inject VetClinic.Web.Services.ApiClient Api
 @rendermode InteractiveServer
 @using VetClinic.Web.Models
+@using System.Text.RegularExpressions
 
 <h3>🧑 Propietarios y Mascotas</h3>
 
@@ -10,14 +11,14 @@
         <h5>Registrar Propietario</h5>
         <EditForm Model="ownerModel" OnValidSubmit="RegisterOwner">
             <InputText class="form-control mb-2" placeholder="Nombre completo" @bind-Value="ownerModel.FullName" />
-            <InputText class="form-control mb-2" placeholder="DNI" @bind-Value="ownerModel.Dni" />
-            <InputText class="form-control mb-2" placeholder="Teléfono" @bind-Value="ownerModel.Phone" />
+            <InputText class="form-control mb-2" placeholder="DNI (8 dígitos)" @bind-Value="ownerModel.Dni" maxlength="8" />
+            <InputText class="form-control mb-2" placeholder="Teléfono (9 dígitos)" @bind-Value="ownerModel.Phone" maxlength="9" />
             <InputText class="form-control mb-2" placeholder="Email" @bind-Value="ownerModel.Email" />
             <InputText class="form-control mb-2" placeholder="Dirección" @bind-Value="ownerModel.Address" />
             <button class="btn btn-primary w-100">Registrar</button>
         </EditForm>
 
-        @if (ownerMsg != null) { <div class="alert alert-info mt-2">@ownerMsg</div> }
+        @if (ownerMsg != null) { <div class="alert @(ownerOk ? "alert-success" : "alert-danger") mt-2">@ownerMsg</div> }
 
         <hr />
 
@@ -36,7 +37,7 @@
             <button class="btn btn-success w-100">Registrar Mascota</button>
         </EditForm>
 
-        @if (petMsg != null) { <div class="alert alert-info mt-2">@petMsg</div> }
+        @if (petMsg != null) { <div class="alert @(petOk ? "alert-success" : "alert-danger") mt-2">@petMsg</div> }
     </div>
 
     <div class="col-md-7">
@@ -63,6 +64,8 @@
     private RegisterPetRequest petModel = new();
     private string? ownerMsg;
     private string? petMsg;
+    private bool ownerOk;
+    private bool petOk;
 
     protected override async Task OnInitializedAsync() => await LoadOwners();
 
@@ -70,8 +73,23 @@
 
     private async Task RegisterOwner()
     {
-        var success = await Api.RegisterOwnerAsync(ownerModel);
-        ownerMsg = success ? "✅ Propietario registrado" : "❌ Error al registrar";
+        if (string.IsNullOrWhiteSpace(ownerModel.Dni) || !Regex.IsMatch(ownerModel.Dni, @"^\d{8}$"))
+        {
+            ownerOk = false;
+            ownerMsg = "❌ El DNI debe tener exactamente 8 dígitos numéricos";
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(ownerModel.Phone) && !Regex.IsMatch(ownerModel.Phone, @"^\d{9}$"))
+        {
+            ownerOk = false;
+            ownerMsg = "❌ El teléfono debe tener exactamente 9 dígitos numéricos";
+            return;
+        }
+
+        var (success, error) = await Api.RegisterOwnerAsync(ownerModel);
+        ownerOk = success;
+        ownerMsg = success ? "✅ Propietario registrado" : $"❌ {error}";
         if (success)
         {
             ownerModel = new();
@@ -81,10 +99,23 @@
 
     private async Task RegisterPet()
     {
-        if (petModel.OwnerId == 0) { petMsg = "❌ Selecciona un propietario"; return; }
+        if (petModel.OwnerId == 0)
+        {
+            petOk = false;
+            petMsg = "❌ Selecciona un propietario";
+            return;
+        }
 
-        var success = await Api.RegisterPetAsync(petModel);
-        petMsg = success ? "✅ Mascota registrada" : "❌ Error al registrar";
+        if (string.IsNullOrWhiteSpace(petModel.Name))
+        {
+            petOk = false;
+            petMsg = "❌ El nombre de la mascota es obligatorio";
+            return;
+        }
+
+        var (success, error) = await Api.RegisterPetAsync(petModel);
+        petOk = success;
+        petMsg = success ? "✅ Mascota registrada" : $"❌ {error}";
         if (success)
         {
             petModel = new();

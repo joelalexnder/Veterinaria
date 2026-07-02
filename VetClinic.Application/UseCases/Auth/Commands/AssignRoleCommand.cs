@@ -1,4 +1,5 @@
 using MediatR;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace Application.UseCases.Auth.Commands;
@@ -19,7 +20,7 @@ public class AssignRoleCommandHandler : IRequestHandler<AssignRoleCommand, Unit>
     {
         var user = await _uow.Users.GetByIdAsync(request.UserId);
 
-        if (user is null) throw new Exception("Usuario no encontrado");
+        if (user is null) throw new NotFoundException("Usuario no encontrado");
 
         user.RoleId = request.RoleId;
         _uow.Users.Update(user);

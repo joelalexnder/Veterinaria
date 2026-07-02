@@ -1,6 +1,7 @@
 using MediatR;
 using AutoMapper;
 using VetClinic.Domain.DTOs.Auth;
+using VetClinic.Domain.Exceptions;
 using VetClinic.Domain.Ports.Repository;
 
 namespace Application.UseCases.Auth.Queries;
@@ -24,7 +25,7 @@ public class GetUserProfileQueryHandler : IRequestHandler<GetUserProfileQuery, U
     public async Task<UserDto> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
     {
         var user = await _uow.Users.GetUserWithRoleByIdAsync(request.UserId);
-        if (user is null) throw new Exception("Usuario no encontrado");
+        if (user is null) throw new NotFoundException("Usuario no encontrado");
         return _mapper.Map<UserDto>(user);
     }
 }
