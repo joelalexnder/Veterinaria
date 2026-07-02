@@ -1,88 +1,63 @@
 @page "/ai-summary"
-@inject VetClinic.Web.Services.ApiClient Api
+@using System.Text.RegularExpressions
 @inject VetClinic.Web.Services.AuthStateService AuthState
 @inject NavigationManager Nav
+@inject VetClinic.Web.Services.ApiClient Api
 @rendermode InteractiveServer
 
-<div class="page-header">
-    <i class="bi bi-robot"></i>
-    <h3>Resumen de Salud con IA</h3>
-</div>
+<h3>🤖 Resumen de Salud con IA</h3>
 
-<div class="row g-3">
+<div class="row">
     <div class="col-md-4">
-        <div class="card card-accent-primary">
-            <div class="section-title"><i class="bi bi-search-heart"></i> Buscar mascota</div>
-
-            <label class="form-label small">Buscar por nombre</label>
-            <input type="text" class="form-control mb-2"
-                   placeholder="Ej: Max, Luna..."
-                   value="@searchTerm"
-                   @oninput="OnSearchInput" />
-
-            @if (searching)
+        <label>1. Seleccionar Propietario</label>
+        <select class="form-select mb-3" @bind="selectedOwnerId" @bind:after="LoadPets">
+            <option value="0">-- Elige un propietario --</option>
+            @foreach (var owner in owners)
             {
-                <div class="text-muted small mb-2">Buscando...</div>
+                <option value="@owner.Id">@owner.FullName</option>
             }
+        </select>
 
-            @if (searchResults.Count > 0)
+        <label>2. Seleccionar Mascota</label>
+        <select class="form-select mb-3" @bind="petId" disabled="@(pets.Count == 0)">
+            <option value="0">-- Elige una mascota --</option>
+            @foreach (var pet in pets)
             {
-                <ul class="list-group mb-3">
-                    @foreach (var p in searchResults)
-                    {
-                        <li class="list-group-item list-group-item-action @(petId == p.Id ? "active" : "")"
-                            style="cursor:pointer"
-                            @onclick="() => SelectPet(p)">
-                            <strong>@p.Name</strong> — @p.Species
-                            <br />
-                            <small class="text-muted">Dueño: @p.OwnerName · Id: @p.Id</small>
-                        </li>
-                    }
-                </ul>
+                <option value="@pet.Id">@pet.Name</option>
             }
-            else if (!string.IsNullOrWhiteSpace(searchTerm) && !searching)
-            {
-                <div class="text-muted small mb-3">Sin resultados para "@searchTerm"</div>
-            }
-
-            <hr />
-
-            <label class="form-label small">O ingresa el Id directamente</label>
-            <input type="number" class="form-control mb-3" @bind="petId" />
-
-            @if (selectedPetName != null)
-            {
-                <div class="alert alert-secondary py-2 mb-3">
-                    Mascota seleccionada: <strong>@selectedPetName</strong> (Id: @petId)
-                </div>
-            }
-
-            <button class="btn btn-primary w-100" @onclick="GetSummary" disabled="@(loading || petId == 0)">
-                <i class="bi bi-stars"></i> @(loading ? "Generando..." : "Generar resumen")
-            </button>
-        </div>
+        </select>
+        
+        <button class="btn btn-primary" @onclick="GetSummary" disabled="@(loading || petId == 0)">
+            @(loading ? "Generando..." : "Generar resumen")
+        </button>
     </div>
 
     <div class="col-md-8">
         @if (summary != null)
         {
-            <div class="card card-accent-success">
-                <div class="section-title"><i class="bi bi-file-text"></i> Resumen generado</div>
-                <p style="white-space: pre-line" class="mb-0">@summary</p>
+            <div class="card p-3 shadow-sm">
+                <h6 class="text-primary">Resumen generado:</h6>
+                <p style="white-space: pre-line">@((MarkupString)FormatMarkdownToHtml(summary))</p>
             </div>
         }
         @if (error != null)
         {
-            <div class="alert alert-danger d-flex align-items-center gap-2">
-                <i class="bi bi-exclamation-circle"></i>
-                <span>@error</span>
-            </div>
+            <div class="alert alert-danger">@error</div>
         }
     </div>
 </div>
 
 @code {
-    protected override void OnInitialized()
+    private int selectedOwnerId;
+    private int petId;
+    private string? summary;
+    private string? error;
+    private bool loading;
+    
+    private List<OwnerDto> owners = new(); 
+    private List<PetDto> pets = new(); 
+
+    protected override async Task OnInitializedAsync()
     {
         if (!AuthState.IsAuthenticated)
         {
@@ -93,59 +68,36 @@
         if (AuthState.Role is not ("Administrador" or "Veterinario"))
         {
             Nav.NavigateTo("/owners");
-        }
-    }
-
-    private int petId;
-    private string? selectedPetName;
-    private string searchTerm = "";
-    private List<PetDto> searchResults = new();
-    private bool searching;
-    private string? summary;
-    private string? error;
-    private bool loading;
-
-    private CancellationTokenSource? _debounceCts;
-
-    private async Task OnSearchInput(ChangeEventArgs e)
-    {
-        searchTerm = e.Value?.ToString() ?? "";
-        selectedPetName = null;
-
-        _debounceCts?.Cancel();
-        _debounceCts = new CancellationTokenSource();
-        var token = _debounceCts.Token;
-
-        try
-        {
-            await Task.Delay(400, token);
-        }
-        catch (TaskCanceledException)
-        {
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        var fetchedOwners = await Api.GetOwnersAsync();
+        if (fetchedOwners != null)
         {
-            searchResults = new();
-            return;
+            owners = fetchedOwners;
         }
-
-        searching = true;
-        searchResults = await Api.SearchPetsAsync(name: searchTerm);
-        searching = false;
     }
 
-    private void SelectPet(PetDto pet)
+    private async Task LoadPets()
     {
-        petId = pet.Id;
-        selectedPetName = pet.Name;
-        searchResults = new();
-        searchTerm = pet.Name;
+        petId = 0; 
+        pets.Clear(); 
+        summary = null; 
+
+        if (selectedOwnerId > 0)
+        {
+            var fetchedPets = await Api.GetPetsByOwnerAsync(selectedOwnerId);
+            if (fetchedPets != null)
+            {
+                pets = fetchedPets;
+            }
+        }
     }
 
     private async Task GetSummary()
     {
+        if (petId == 0) return; 
+
         loading = true;
         error = null;
         summary = null;
@@ -153,10 +105,16 @@
         var result = await Api.GetPetHealthSummaryAsync(petId);
 
         if (result is null)
-            error = "No se pudo generar el resumen. Verifica el Id de la mascota.";
+            error = "No se pudo generar el resumen. Verifica la conexión.";
         else
             summary = result;
 
         loading = false;
+    }
+
+    private string FormatMarkdownToHtml(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        return Regex.Replace(text, @"\*\*(.*?)\*\*", "<strong>$1</strong>");
     }
 }
