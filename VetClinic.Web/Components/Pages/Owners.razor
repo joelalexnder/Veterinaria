@@ -21,10 +21,18 @@
                 <InputText class="form-control mb-2" placeholder="Nombre completo" @bind-Value="ownerModel.FullName" />
 
                 <label class="form-label small">DNI</label>
-                <InputText class="form-control mb-2" placeholder="DNI" @bind-Value="ownerModel.Dni" />
+                <InputText class="form-control mb-2"
+                           placeholder="DNI"
+                           maxlength="8"
+                           @bind-Value="ownerModel.Dni"
+                           @oninput="OnlyNumbersDni" />
 
                 <label class="form-label small">Teléfono</label>
-                <InputText class="form-control mb-2" placeholder="Teléfono" @bind-Value="ownerModel.Phone" />
+                <InputText class="form-control mb-2"
+                           placeholder="Teléfono"
+                           maxlength="9"
+                           @bind-Value="ownerModel.Phone"
+                           @oninput="OnlyNumbersPhone" />
 
                 <label class="form-label small">Email</label>
                 <InputText class="form-control mb-2" placeholder="Email" @bind-Value="ownerModel.Email" />
@@ -145,7 +153,23 @@
             ? breeds
             : new List<string>();
     }
+    private void OnlyNumbersDni(ChangeEventArgs e)
+    {
+        ownerModel.Dni = new string(
+            (e.Value?.ToString() ?? "")
+            .Where(char.IsDigit)
+            .Take(8)
+            .ToArray());
+    }
 
+    private void OnlyNumbersPhone(ChangeEventArgs e)
+    {
+        ownerModel.Phone = new string(
+            (e.Value?.ToString() ?? "")
+            .Where(char.IsDigit)
+            .Take(9)
+            .ToArray());
+    }
     private async Task RegisterOwner()
     {
         var (success, error) = await Api.RegisterOwnerAsync(ownerModel);
@@ -157,7 +181,7 @@
         }
     }
 
-    private async Task RegisterPet()
+    private async Task RegisterPet()    
     {
         if (petModel.OwnerId == 0) { petMsg = "❌ Selecciona un propietario"; return; }
 
